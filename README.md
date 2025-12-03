@@ -34,6 +34,19 @@ This application:
   - Confidence scores and probability distributions
 - **Historical Comparison**: Compares predictions to similar past winters
 
+### Visualizations
+- **Prediction Charts**: Comprehensive visualization of winter predictions including:
+  - Category probabilities with confidence levels
+  - Predicted vs historical temperature and snowfall comparison
+  - Severity score gauge showing prediction on severity scale
+  - Input features used for prediction
+- **Historical Trends**: Last 10 years of winter data visualized with:
+  - Temperature trends (average, max, min)
+  - Snowfall patterns by year
+  - Severity scores over time
+  - Distribution of winter severity categories
+- **Automatic Generation**: Visualizations are automatically saved as PNG files in the `visualizations/` directory
+
 ## Installation
 
 ### Prerequisites
@@ -70,6 +83,7 @@ The application will:
 3. Train prediction models on historical data
 4. Generate a prediction for Winter 2025-2026
 5. Display insights about seasonal correlations and recent trends
+6. **Generate and save visualizations** showing prediction details and historical trends
 
 ### Example Output
 
@@ -115,6 +129,20 @@ Based on weather patterns from 2025:
     Moderate   [████████████████████        ] 68.5%
     Severe     [████████                    ] 22.1%
     Mild       [██                          ]  9.4%
+
+======================================================================
+  Generating Visualizations
+======================================================================
+
+✓ Prediction visualization saved: visualizations/winter_2025-2026_prediction.png
+✓ Historical winters visualization saved: visualizations/historical_winters_last_10_years.png
+
+  Visualizations include:
+    • Winter 2025-2026 prediction details
+    • Category probabilities and severity score
+    • Temperature and snowfall predictions
+    • Last 10 years of historical winter data
+    • Temperature trends, snowfall patterns, and severity distribution
 ```
 
 ### Using Individual Modules
@@ -149,6 +177,24 @@ predictor.train(correlation_results['correlation_df'])
 
 prediction = predictor.predict_from_current_data(analyzer, target_winter_year=2026)
 print(f"Predicted winter category: {prediction['predicted_category']}")
+```
+
+#### Generate Visualizations
+```python
+from src.weather_visualizer import WeatherVisualizer
+
+visualizer = WeatherVisualizer()
+
+# Create prediction visualization
+prediction_path = visualizer.visualize_prediction(prediction, winter_df)
+print(f"Prediction chart saved to: {prediction_path}")
+
+# Create historical winters visualization
+historical_path = visualizer.visualize_historical_winters(winter_df, n_years=10)
+print(f"Historical chart saved to: {historical_path}")
+
+# Or create both at once
+pred_path, hist_path = visualizer.visualize_both(prediction, winter_df, n_years=10)
 ```
 
 ## How It Works
@@ -243,9 +289,10 @@ Potential improvements:
 - Add support for other cities and regions
 - Incorporate additional data sources (e.g., NOAA, local weather stations)
 - Implement ensemble models combining multiple prediction approaches
-- Add visualization of trends and predictions
+- ~~Add visualization of trends and predictions~~ ✓ **Completed**
 - Create a web interface for easier interaction
 - Include more sophisticated climate indicators (e.g., El Niño/La Niña)
+- Add interactive visualizations with filtering and zooming capabilities
 
 ## Contributing
 
