@@ -83,8 +83,9 @@ def main():
     print("\n  Recent Winters:")
     recent_winters = winter_df.tail(5)
     for _, winter in recent_winters.iterrows():
+        enso_info = f" [{winter['enso_phase']}]" if winter['enso_phase'] != "Unknown" else ""
         print(f"    {winter['winter_label']}: {winter['severity_category']:10s} "
-              f"(Avg: {format_temp(winter['avg_temp'])}, Snow: {format_precip(winter['total_snowfall'])})")
+              f"(Avg: {format_temp(winter['avg_temp'])}, Snow: {format_precip(winter['total_snowfall'])}){enso_info}")
     
     # Analyze correlations
     print("\n⟳ Analyzing seasonal correlations...")
@@ -132,7 +133,12 @@ def main():
     try:
         prediction = predictor.predict_from_current_data(analyzer, target_winter_year=2026)
         
+        # Get ENSO classification for the predicted winter
+        enso_info = analyzer.enso_classifier.classify_winter(2026)
+        
         print(f"\nBased on weather patterns from {prediction['based_on_year']}:")
+        print(f"\n  ENSO Conditions: {enso_info['description']}")
+        print(f"  {analyzer.enso_classifier.get_enso_impact_description(enso_info['phase'])}")
         print(f"\n  Predicted Category: {prediction['predicted_category']}")
         print(f"  Confidence: {prediction['confidence'] * 100:.1f}%")
         print(f"\n  Predicted Average Temperature: {format_temp(prediction['predicted_avg_temp'])}")
@@ -157,8 +163,9 @@ def main():
         
         print("\n  Similar Historical Winters:")
         for winter in comparison['similar_winters']:
+            enso_label = f" [{winter['enso_phase']}]" if winter['enso_phase'] != "Unknown" else ""
             print(f"    • {winter['winter_label']}: {winter['severity_category']} "
-                  f"({format_temp(winter['avg_temp'])}, {format_precip(winter['total_snowfall'])})")
+                  f"({format_temp(winter['avg_temp'])}, {format_precip(winter['total_snowfall'])}){enso_label}")
         
     except Exception as e:
         print(f"\n✗ Error making prediction: {e}")
