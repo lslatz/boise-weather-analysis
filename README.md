@@ -22,6 +22,7 @@ This application:
 ### Analysis Capabilities
 - **Seasonal Aggregation**: Calculates features for Winter, Spring, Summer, and Fall
 - **Winter Classification**: Categorizes winters as Mild, Moderate, Severe, or Extreme
+- **ENSO Detection**: Identifies El Niño, La Niña, or Neutral conditions for each winter year
 - **Correlation Analysis**: Identifies relationships between seasonal patterns
 - **Trend Detection**: Tracks warming/cooling trends over recent years
 
@@ -106,17 +107,21 @@ to predict winter conditions based on preceding seasonal data.
 ✓ Analyzed 83 complete winters
 
   Recent Winters:
-    2020-2021: Moderate    (Avg: 32.5°F, Snow: 18.35")
-    2021-2022: Mild        (Avg: 35.2°F, Snow: 12.10")
-    2022-2023: Severe      (Avg: 28.8°F, Snow: 25.60")
-    2023-2024: Moderate    (Avg: 31.9°F, Snow: 19.45")
-    2024-2025: Mild        (Avg: 34.1°F, Snow: 14.20")
+    2020-2021: Moderate    (Avg: 32.5°F, Snow: 18.35") [La Niña]
+    2021-2022: Mild        (Avg: 35.2°F, Snow: 12.10") [La Niña]
+    2022-2023: Severe      (Avg: 28.8°F, Snow: 25.60") [El Niño]
+    2023-2024: Moderate    (Avg: 31.9°F, Snow: 19.45") [El Niño]
+    2024-2025: Mild        (Avg: 34.1°F, Snow: 14.20") [Neutral]
 
 ======================================================================
   Winter 2025-2026 Prediction
 ======================================================================
 
 Based on weather patterns from 2025:
+
+  ENSO Conditions: Weak La Niña (ONI: -0.5°C)
+  La Niña winters in the Pacific Northwest tend to be cooler and wetter
+  than average, potentially bringing more snowfall to the region.
 
   Predicted Category: Moderate
   Confidence: 68.5%
@@ -165,6 +170,33 @@ from src.weather_analyzer import WeatherAnalyzer
 analyzer = WeatherAnalyzer(df)
 seasonal_df = analyzer.calculate_seasonal_features()
 winter_df = analyzer.calculate_winter_features()
+
+# Winter features now include ENSO classification
+print(winter_df[['winter_label', 'severity_category', 'enso_phase', 'enso_description']].tail())
+```
+
+#### Check ENSO Conditions
+```python
+from src.enso_classifier import ENSOClassifier
+
+enso = ENSOClassifier()
+
+# Classify a specific year
+enso_2024 = enso.classify_year(2024)
+print(f"2024: {enso_2024['description']}")
+
+# Get winter-specific classification
+winter_2026 = enso.classify_winter(2026)
+print(f"Winter 2025-2026: {winter_2026['phase']}")
+
+# Get impact description
+impact = enso.get_enso_impact_description(winter_2026['phase'])
+print(impact)
+
+# Get all El Niño years since 2000
+el_nino_years = enso.get_historical_enso_years(phase="El Niño", min_year=2000, max_year=2024)
+for year_data in el_nino_years:
+    print(f"{year_data['year']}: {year_data['description']}")
 ```
 
 #### Make Predictions
@@ -228,14 +260,25 @@ Winters are then categorized as:
 - **Severe**: Cold temperatures, significant snowfall
 - **Extreme**: Exceptionally cold and snowy
 
-### 4. Correlation Analysis
+### 4. ENSO (El Niño-Southern Oscillation) Classification
+Each winter is classified based on the Oceanic Niño Index (ONI):
+- **El Niño**: Warmer Pacific sea surface temperatures (ONI ≥ +0.5°C)
+  - Tends to bring warmer, drier winters to the Pacific Northwest
+- **La Niña**: Cooler Pacific sea surface temperatures (ONI ≤ -0.5°C)
+  - Tends to bring cooler, wetter winters with more snowfall
+- **Neutral**: Normal conditions (-0.5°C < ONI < +0.5°C)
+  - No strong ENSO influence on winter weather patterns
+
+The application uses historical ONI data from NOAA to identify ENSO conditions for each winter season.
+
+### 5. Correlation Analysis
 The system analyzes relationships between:
 - Summer temperature → Winter severity
 - Summer heat waves → Winter snowfall
 - Fall precipitation → Winter conditions
 - Long-term seasonal trends
 
-### 5. Prediction
+### 6. Prediction
 Random Forest machine learning models predict:
 - Winter severity score
 - Expected snowfall
@@ -270,11 +313,15 @@ df = fetcher.fetch_and_save(start_date="1950-01-01", end_date="2020-12-31")
 
 ## Data Sources
 
-This application uses the [Open-Meteo Historical Weather API](https://open-meteo.com/):
-- Free and open-source
-- No API key required
-- Historical data from 1940 onwards
-- High-quality reanalysis data
+This application uses:
+- **[Open-Meteo Historical Weather API](https://open-meteo.com/)**: 
+  - Free and open-source weather data
+  - No API key required
+  - Historical data from 1940 onwards
+  - High-quality reanalysis data
+- **NOAA Climate Prediction Center**:
+  - Oceanic Niño Index (ONI) data for ENSO classification
+  - Historical ENSO phase information from 1940 to present
 
 ## Limitations
 
@@ -282,6 +329,7 @@ This application uses the [Open-Meteo Historical Weather API](https://open-meteo
 - Long-term accuracy depends on climate stability (climate change may affect pattern reliability)
 - Requires complete seasonal data from the preceding year for best predictions
 - Local microclimates and extreme weather events may not be fully captured
+- ENSO conditions provide general trends but don't guarantee specific outcomes for any location
 
 ## Future Enhancements
 
@@ -290,8 +338,8 @@ Potential improvements:
 - Incorporate additional data sources (e.g., NOAA, local weather stations)
 - Implement ensemble models combining multiple prediction approaches
 - ~~Add visualization of trends and predictions~~ ✓ **Completed**
+- ~~Include more sophisticated climate indicators (e.g., El Niño/La Niña)~~ ✓ **Completed**
 - Create a web interface for easier interaction
-- Include more sophisticated climate indicators (e.g., El Niño/La Niña)
 - Add interactive visualizations with filtering and zooming capabilities
 
 ## Contributing
