@@ -17,6 +17,13 @@ class WeatherVisualizer:
     # ENSO marker positioning offset (as fraction of y-axis range from bottom)
     ENSO_MARKER_POSITION_OFFSET = 0.02
     
+    # ENSO phase abbreviations for compact display
+    ENSO_PHASE_ABBREVIATIONS = {
+        'Neutral': 'N',
+        'El Niño': 'EN',
+        'La Niña': 'LN'
+    }
+    
     def __init__(self, output_dir="visualizations"):
         """Initialize the visualizer.
         
@@ -310,13 +317,10 @@ class WeatherVisualizer:
         
         # Check if ENSO data is available
         if 'enso_phase' in recent_winters.columns:
-            # ENSO phase abbreviations
-            enso_mapping = {'Neutral': 'N', 'El Niño': 'EN', 'La Niña': 'LN'}
-            
             # Create a table showing ENSO and severity for each winter
             table_data = []
             for _, row in recent_winters.iterrows():
-                enso_short = enso_mapping.get(row['enso_phase'], '?')
+                enso_short = self.ENSO_PHASE_ABBREVIATIONS.get(row['enso_phase'], '?')
                 table_data.append([
                     row['winter_label'],
                     enso_short,
