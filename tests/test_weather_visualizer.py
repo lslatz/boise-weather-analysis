@@ -36,7 +36,9 @@ class TestWeatherVisualizer(unittest.TestCase):
             'total_snowfall': [15.0, 12.5, 20.0, 10.5, 18.0, 14.0, 8.5, 16.0, 13.5, 11.0],
             'severity_score': [25.0, 22.0, 30.0, 18.0, 28.0, 24.0, 16.0, 26.0, 23.0, 20.0],
             'severity_category': ['Moderate', 'Moderate', 'Severe', 'Moderate', 'Moderate',
-                                 'Moderate', 'Mild', 'Moderate', 'Moderate', 'Moderate']
+                                 'Moderate', 'Mild', 'Moderate', 'Moderate', 'Moderate'],
+            'enso_phase': ['El Niño', 'El Niño', 'Neutral', 'La Niña', 'Neutral',
+                          'La Niña', 'Neutral', 'El Niño', 'La Niña', 'El Niño']
         })
         
         # Create sample prediction
@@ -65,6 +67,14 @@ class TestWeatherVisualizer(unittest.TestCase):
                     'precip_total': 3.0
                 }
             }
+        }
+        
+        # Create sample ENSO info
+        self.enso_info = {
+            'phase': 'La Niña',
+            'strength': 'Weak',
+            'oni_value': -0.5,
+            'description': 'Weak La Niña (ONI: -0.5°C)'
         }
     
     def tearDown(self):
@@ -125,6 +135,39 @@ class TestWeatherVisualizer(unittest.TestCase):
         filepath = self.visualizer.visualize_prediction(self.prediction)
         
         # Should still create a file
+        self.assertTrue(os.path.exists(filepath))
+        self.assertGreater(os.path.getsize(filepath), 0)
+    
+    def test_visualize_prediction_with_enso(self):
+        """Test prediction visualization with ENSO information."""
+        filepath = self.visualizer.visualize_prediction(
+            self.prediction, self.winter_df, self.enso_info
+        )
+        
+        # Check that the file was created
+        self.assertTrue(os.path.exists(filepath))
+        self.assertGreater(os.path.getsize(filepath), 0)
+    
+    def test_visualize_both_with_enso(self):
+        """Test creating both visualizations with ENSO information."""
+        prediction_path, historical_path = self.visualizer.visualize_both(
+            self.prediction, self.winter_df, n_years=10, enso_info=self.enso_info
+        )
+        
+        # Check that both files were created
+        self.assertTrue(os.path.exists(prediction_path))
+        self.assertTrue(os.path.exists(historical_path))
+        
+        # Check that both files are not empty
+        self.assertGreater(os.path.getsize(prediction_path), 0)
+        self.assertGreater(os.path.getsize(historical_path), 0)
+    
+    def test_historical_winters_with_enso_data(self):
+        """Test that historical winters visualization includes ENSO data."""
+        # The winter_df already has enso_phase column
+        filepath = self.visualizer.visualize_historical_winters(self.winter_df, n_years=10)
+        
+        # Check that the file was created
         self.assertTrue(os.path.exists(filepath))
         self.assertGreater(os.path.getsize(filepath), 0)
 
