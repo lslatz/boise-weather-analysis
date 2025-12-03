@@ -120,6 +120,36 @@ class TestWeatherAnalyzer(unittest.TestCase):
         
         # Test extreme winter
         self.assertEqual(self.analyzer._categorize_winter_severity(60), "Extreme")
+    
+    def test_lag_features_in_correlation_analysis(self):
+        """Test that lag features are included in correlation analysis."""
+        seasonal_df = self.analyzer.calculate_seasonal_features()
+        correlation_results = self.analyzer.analyze_seasonal_correlations(seasonal_df)
+        correlation_df = correlation_results["correlation_df"]
+        
+        # Check for lag features
+        if len(correlation_df) > 1:  # Need at least 2 winters for lag features
+            self.assertTrue("prev_winter_severity" in correlation_df.columns or 
+                          len(correlation_df) == 1,
+                          "Previous winter severity should be in correlation data")
+            self.assertTrue("prev_winter_snowfall" in correlation_df.columns or 
+                          len(correlation_df) == 1,
+                          "Previous winter snowfall should be in correlation data")
+    
+    def test_rolling_averages_in_correlation_analysis(self):
+        """Test that rolling averages are calculated."""
+        seasonal_df = self.analyzer.calculate_seasonal_features()
+        correlation_results = self.analyzer.analyze_seasonal_correlations(seasonal_df)
+        correlation_df = correlation_results["correlation_df"]
+        
+        # Check for rolling average features
+        if len(correlation_df) > 0:
+            self.assertTrue("rolling_2yr_severity" in correlation_df.columns,
+                          "2-year rolling average severity should be present")
+            self.assertTrue("rolling_3yr_severity" in correlation_df.columns,
+                          "3-year rolling average severity should be present")
+            self.assertTrue("rolling_2yr_snowfall" in correlation_df.columns,
+                          "2-year rolling average snowfall should be present")
 
 
 if __name__ == '__main__':

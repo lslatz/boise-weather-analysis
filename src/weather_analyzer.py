@@ -281,9 +281,31 @@ class WeatherAnalyzer:
                 merged_row["enso_la_nina"] = 1.0 if enso_info["phase"] == "La Niña" else 0.0
                 merged_row["enso_neutral"] = 1.0 if enso_info["phase"] == "Neutral" else 0.0
                 
+                # Add lag features: previous winter's data
+                prev_winter = winter_df[winter_df["winter_year"] == winter_year - 1]
+                if len(prev_winter) > 0:
+                    merged_row["prev_winter_severity"] = prev_winter["severity_score"].values[0]
+                    merged_row["prev_winter_snowfall"] = prev_winter["total_snowfall"].values[0]
+                    merged_row["prev_winter_temp_avg"] = prev_winter["avg_temp"].values[0]
+                
                 merged_data.append(merged_row)
         
         correlation_df = pd.DataFrame(merged_data)
+        
+        # Add rolling averages (2-year and 3-year)
+        if len(correlation_df) > 0:
+            # Sort by winter_year to ensure proper rolling calculation
+            correlation_df = correlation_df.sort_values("winter_year").reset_index(drop=True)
+            
+            # 2-year rolling averages
+            correlation_df["rolling_2yr_severity"] = correlation_df["winter_severity"].rolling(window=2, min_periods=1).mean()
+            correlation_df["rolling_2yr_snowfall"] = correlation_df["winter_snowfall"].rolling(window=2, min_periods=1).mean()
+            correlation_df["rolling_2yr_temp"] = correlation_df["winter_temp_avg"].rolling(window=2, min_periods=1).mean()
+            
+            # 3-year rolling averages
+            correlation_df["rolling_3yr_severity"] = correlation_df["winter_severity"].rolling(window=3, min_periods=1).mean()
+            correlation_df["rolling_3yr_snowfall"] = correlation_df["winter_snowfall"].rolling(window=3, min_periods=1).mean()
+            correlation_df["rolling_3yr_temp"] = correlation_df["winter_temp_avg"].rolling(window=3, min_periods=1).mean()
         
         # Calculate correlations
         correlations = {}
@@ -307,10 +329,28 @@ class WeatherAnalyzer:
             correlations["enso_oni_to_winter_temp"] = correlation_df[
                 ["enso_oni", "winter_temp_avg"]
             ].corr().iloc[0, 1] if "enso_oni" in correlation_df.columns else None
+            
+            # Lag feature correlations
+            correlations["prev_winter_severity_to_winter_severity"] = correlation_df[
+                ["prev_winter_severity", "winter_severity"]
+            ].corr().iloc[0, 1] if "prev_winter_severity" in correlation_df.columns else None
+            
+            correlations["prev_winter_snowfall_to_winter_snowfall"] = correlation_df[
+                ["prev_winter_snowfall", "winter_snowfall"]
+            ].corr().iloc[0, 1] if "prev_winter_snowfall" in correlation_df.columns else None
+            
+            correlations["rolling_2yr_severity_to_winter_severity"] = correlation_df[
+                ["rolling_2yr_severity", "winter_severity"]
+            ].corr().iloc[0, 1] if "rolling_2yr_severity" in correlation_df.columns else None
+            
+            correlations["rolling_3yr_severity_to_winter_severity"] = correlation_df[
+                ["rolling_3yr_severity", "winter_severity"]
+            ].corr().iloc[0, 1] if "rolling_3yr_severity" in correlation_df.columns else None
         
         return {
             "correlations": correlations,
-            "correlation_df": correlation_df
+            "correlation_df": correlation_df,
+            "winter_df": winter_df  # Add winter_df for visualization purposes
         }
     
     def get_recent_seasons_summary(self, n_years=5):

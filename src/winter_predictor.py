@@ -36,7 +36,7 @@ class WinterPredictor:
         # Select features for prediction
         feature_cols = []
         for col in correlation_df.columns:
-            if col.startswith("prev_") or col.startswith("enso_"):
+            if col.startswith("prev_") or col.startswith("enso_") or col.startswith("rolling_"):
                 feature_cols.append(col)
         
         self.feature_columns = feature_cols
@@ -132,13 +132,14 @@ class WinterPredictor:
         for i, (feature, importance) in enumerate(feature_importance[:5], 1):
             print(f"  {i}. {feature}: {importance:.3f}")
     
-    def predict(self, summer_features, fall_features=None, enso_features=None):
+    def predict(self, summer_features, fall_features=None, enso_features=None, lag_features=None):
         """Predict winter conditions based on summer (and optionally fall) data and ENSO state.
         
         Args:
             summer_features: Dictionary with summer weather features
             fall_features: Optional dictionary with fall weather features
             enso_features: Optional dictionary with ENSO features (oni, el_nino, la_nina, neutral)
+            lag_features: Optional dictionary with lag features (prev_winter_severity, prev_winter_snowfall, rolling averages)
             
         Returns:
             dict: Predicted winter conditions
@@ -174,6 +175,27 @@ class WinterPredictor:
                 feature_vector["enso_la_nina"] = enso_features["la_nina"]
             if "neutral" in enso_features:
                 feature_vector["enso_neutral"] = enso_features["neutral"]
+        
+        # Add lag features if provided
+        if lag_features:
+            if "prev_winter_severity" in lag_features:
+                feature_vector["prev_winter_severity"] = lag_features["prev_winter_severity"]
+            if "prev_winter_snowfall" in lag_features:
+                feature_vector["prev_winter_snowfall"] = lag_features["prev_winter_snowfall"]
+            if "prev_winter_temp_avg" in lag_features:
+                feature_vector["prev_winter_temp_avg"] = lag_features["prev_winter_temp_avg"]
+            if "rolling_2yr_severity" in lag_features:
+                feature_vector["rolling_2yr_severity"] = lag_features["rolling_2yr_severity"]
+            if "rolling_2yr_snowfall" in lag_features:
+                feature_vector["rolling_2yr_snowfall"] = lag_features["rolling_2yr_snowfall"]
+            if "rolling_2yr_temp" in lag_features:
+                feature_vector["rolling_2yr_temp"] = lag_features["rolling_2yr_temp"]
+            if "rolling_3yr_severity" in lag_features:
+                feature_vector["rolling_3yr_severity"] = lag_features["rolling_3yr_severity"]
+            if "rolling_3yr_snowfall" in lag_features:
+                feature_vector["rolling_3yr_snowfall"] = lag_features["rolling_3yr_snowfall"]
+            if "rolling_3yr_temp" in lag_features:
+                feature_vector["rolling_3yr_temp"] = lag_features["rolling_3yr_temp"]
         
         # Ensure all required features are present
         X = []
@@ -271,8 +293,34 @@ class WinterPredictor:
             "neutral": 1.0 if enso_info["phase"] in ["Neutral", "Unknown"] else 0.0,
         }
         
+        # Get lag features: previous winter data and rolling averages
+        lag_features = {}
+        winter_df = analyzer.calculate_winter_features()
+        
+        # Get previous winter data
+        prev_winter = winter_df[winter_df["winter_year"] == target_winter_year - 1]
+        if len(prev_winter) > 0:
+            lag_features["prev_winter_severity"] = prev_winter["severity_score"].values[0]
+            lag_features["prev_winter_snowfall"] = prev_winter["total_snowfall"].values[0]
+            lag_features["prev_winter_temp_avg"] = prev_winter["avg_temp"].values[0]
+        
+        # Calculate rolling averages from historical winters
+        # Get the last 2-3 winters before target
+        historical_winters = winter_df[winter_df["winter_year"] < target_winter_year].tail(3)
+        if len(historical_winters) >= 2:
+            # 2-year rolling average
+            lag_features["rolling_2yr_severity"] = historical_winters.tail(2)["severity_score"].mean()
+            lag_features["rolling_2yr_snowfall"] = historical_winters.tail(2)["total_snowfall"].mean()
+            lag_features["rolling_2yr_temp"] = historical_winters.tail(2)["avg_temp"].mean()
+        
+        if len(historical_winters) >= 3:
+            # 3-year rolling average
+            lag_features["rolling_3yr_severity"] = historical_winters["severity_score"].mean()
+            lag_features["rolling_3yr_snowfall"] = historical_winters["total_snowfall"].mean()
+            lag_features["rolling_3yr_temp"] = historical_winters["avg_temp"].mean()
+        
         # Make prediction
-        prediction = self.predict(summer_features, fall_features, enso_features)
+        prediction = self.predict(summer_features, fall_features, enso_features, lag_features)
         
         # Add context
         prediction["winter_year"] = target_winter_year
@@ -283,7 +331,8 @@ class WinterPredictor:
         prediction["input_features"] = {
             "summer": summer_features,
             "fall": fall_features,
-            "enso": enso_features
+            "enso": enso_features,
+            "lag": lag_features
         }
         
         return prediction

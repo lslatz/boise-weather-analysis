@@ -170,6 +170,34 @@ class TestWeatherVisualizer(unittest.TestCase):
         # Check that the file was created
         self.assertTrue(os.path.exists(filepath))
         self.assertGreater(os.path.getsize(filepath), 0)
+    
+    def test_visualize_feature_analysis(self):
+        """Test feature analysis visualization creation."""
+        # Create sample correlation dataframe with lag features
+        correlation_df = pd.DataFrame({
+            'winter_year': range(2015, 2025),
+            'winter_severity': [25.0, 22.0, 30.0, 18.0, 28.0, 24.0, 16.0, 26.0, 23.0, 20.0],
+            'winter_snowfall': [15.0, 12.5, 20.0, 10.5, 18.0, 14.0, 8.5, 16.0, 13.5, 11.0],
+            'winter_temp_avg': [32.0, 33.5, 31.2, 34.0, 32.8, 33.1, 34.5, 32.5, 33.0, 34.2],
+            'prev_summer_temp': [70.0, 71.0, 69.0, 72.0, 70.5, 71.5, 73.0, 70.0, 71.0, 72.5],
+            'prev_fall_temp': [50.0, 51.0, 49.0, 52.0, 50.5, 51.5, 53.0, 50.0, 51.0, 52.5],
+            'prev_winter_severity': [20.0, 25.0, 22.0, 30.0, 18.0, 28.0, 24.0, 16.0, 26.0, 23.0],
+            'prev_winter_snowfall': [12.0, 15.0, 12.5, 20.0, 10.5, 18.0, 14.0, 8.5, 16.0, 13.5],
+            'prev_winter_temp_avg': [33.0, 32.0, 33.5, 31.2, 34.0, 32.8, 33.1, 34.5, 32.5, 33.0],
+            'rolling_2yr_severity': [22.5, 23.5, 26.0, 24.0, 23.0, 22.0, 20.0, 21.0, 24.5, 21.5],
+            'rolling_3yr_severity': [22.3, 25.7, 23.3, 25.3, 22.0, 22.7, 22.7, 21.3, 21.7, 23.0],
+            'rolling_2yr_snowfall': [13.5, 13.8, 16.3, 15.3, 14.3, 13.0, 11.3, 12.3, 14.8, 12.5],
+            'rolling_3yr_snowfall': [13.2, 15.8, 14.3, 16.2, 14.0, 14.2, 13.5, 12.8, 12.7, 13.7],
+            'rolling_2yr_temp': [32.8, 32.8, 32.4, 32.6, 33.0, 32.9, 33.8, 33.5, 33.8, 33.6],
+            'rolling_3yr_temp': [32.9, 32.2, 32.9, 32.7, 32.6, 33.3, 33.5, 33.4, 33.3, 33.2],
+            'enso_oni': [-0.5, 1.0, 0.2, -0.8, 0.1, -0.6, 0.3, 0.9, -0.7, 1.2]
+        })
+        
+        filepath = self.visualizer.visualize_feature_analysis(correlation_df, self.prediction)
+        
+        # Check that the file was created
+        self.assertTrue(os.path.exists(filepath))
+        self.assertGreater(os.path.getsize(filepath), 0)
 
 
 if __name__ == '__main__':

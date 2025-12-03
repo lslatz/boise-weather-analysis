@@ -373,3 +373,243 @@ class WeatherVisualizer:
         historical_path = self.visualize_historical_winters(winter_df, n_years)
         
         return prediction_path, historical_path
+    
+    def visualize_feature_analysis(self, correlation_df, prediction=None):
+        """Create visualization showing all features used in the analysis.
+        
+        Args:
+            correlation_df: DataFrame with correlation data including all features
+            prediction: Optional prediction dict to highlight current prediction features
+            
+        Returns:
+            str: Path to saved figure
+        """
+        fig = plt.figure(figsize=(16, 10))
+        gs = gridspec.GridSpec(3, 3, figure=fig, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.3)
+        
+        fig.suptitle('Winter Prediction Feature Analysis\nComprehensive View of All Input Features', 
+                     fontsize=16, fontweight='bold')
+        
+        # 1. Feature Correlation Heatmap (top row, spans 2 columns)
+        ax1 = fig.add_subplot(gs[0, :2])
+        
+        # Select numeric columns for correlation (exclude categorical columns)
+        feature_cols = [col for col in correlation_df.columns 
+                       if (col.startswith('prev_') or col.startswith('enso_') 
+                           or col.startswith('rolling_') or col.startswith('winter_'))
+                       and col not in ['winter_category', 'winter_label', 'winter_year']
+                       and pd.api.types.is_numeric_dtype(correlation_df[col])]
+        
+        if len(feature_cols) > 0:
+            corr_matrix = correlation_df[feature_cols].corr()
+            
+            # Create a mask for the upper triangle
+            mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+            
+            # Plot heatmap
+            sns.heatmap(corr_matrix, mask=mask, annot=False, cmap='coolwarm', 
+                       center=0, vmin=-1, vmax=1, ax=ax1, cbar_kws={'label': 'Correlation'})
+            ax1.set_title('Feature Correlation Matrix', fontweight='bold', fontsize=12)
+            
+            # Rotate labels for better readability
+            ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right', fontsize=8)
+            ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0, fontsize=8)
+        
+        # 2. Feature Categories Breakdown (top right)
+        ax2 = fig.add_subplot(gs[0, 2])
+        
+        # Count features by category
+        feature_categories = {
+            'Summer Features': len([c for c in correlation_df.columns if 'summer' in c and c.startswith('prev_')]),
+            'Fall Features': len([c for c in correlation_df.columns if 'fall' in c and c.startswith('prev_')]),
+            'ENSO Features': len([c for c in correlation_df.columns if c.startswith('enso_')]),
+            'Previous Winter': len([c for c in correlation_df.columns if 'prev_winter' in c]),
+            'Rolling Averages': len([c for c in correlation_df.columns if c.startswith('rolling_')])
+        }
+        
+        categories = list(feature_categories.keys())
+        counts = list(feature_categories.values())
+        colors_cat = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8']
+        
+        wedges, texts, autotexts = ax2.pie(counts, labels=categories, colors=colors_cat,
+                                            autopct='%1.0f%%', startangle=90,
+                                            textprops={'fontsize': 8, 'fontweight': 'bold'})
+        ax2.set_title('Feature Categories', fontweight='bold', fontsize=12)
+        
+        # 3. Lag Features Over Time (middle row, left)
+        ax3 = fig.add_subplot(gs[1, 0])
+        
+        if 'winter_year' in correlation_df.columns and 'prev_winter_severity' in correlation_df.columns:
+            recent_data = correlation_df.tail(15)
+            
+            ax3.plot(recent_data['winter_year'], recent_data['prev_winter_severity'], 
+                    marker='o', label='Prev Winter Severity', linewidth=2, markersize=6)
+            
+            if 'rolling_2yr_severity' in recent_data.columns:
+                ax3.plot(recent_data['winter_year'], recent_data['rolling_2yr_severity'],
+                        marker='s', label='2-Year Avg', linewidth=2, markersize=5, linestyle='--', alpha=0.7)
+            
+            if 'rolling_3yr_severity' in recent_data.columns:
+                ax3.plot(recent_data['winter_year'], recent_data['rolling_3yr_severity'],
+                        marker='^', label='3-Year Avg', linewidth=2, markersize=5, linestyle=':', alpha=0.7)
+            
+            ax3.set_xlabel('Winter Year', fontweight='bold')
+            ax3.set_ylabel('Severity Score', fontweight='bold')
+            ax3.set_title('Lag Features: Winter Severity Trends', fontweight='bold', fontsize=11)
+            ax3.legend(fontsize=8)
+            ax3.grid(True, alpha=0.3)
+            plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        else:
+            ax3.text(0.5, 0.5, 'Lag feature data not available', 
+                    ha='center', va='center', transform=ax3.transAxes)
+            ax3.axis('off')
+        
+        # 4. Snowfall Lag Features (middle row, center)
+        ax4 = fig.add_subplot(gs[1, 1])
+        
+        if 'winter_year' in correlation_df.columns and 'prev_winter_snowfall' in correlation_df.columns:
+            recent_data = correlation_df.tail(15)
+            
+            ax4.plot(recent_data['winter_year'], recent_data['prev_winter_snowfall'],
+                    marker='o', label='Prev Winter Snowfall', linewidth=2, markersize=6, color='#2196F3')
+            
+            if 'rolling_2yr_snowfall' in recent_data.columns:
+                ax4.plot(recent_data['winter_year'], recent_data['rolling_2yr_snowfall'],
+                        marker='s', label='2-Year Avg', linewidth=2, markersize=5, 
+                        linestyle='--', alpha=0.7, color='#64B5F6')
+            
+            if 'rolling_3yr_snowfall' in recent_data.columns:
+                ax4.plot(recent_data['winter_year'], recent_data['rolling_3yr_snowfall'],
+                        marker='^', label='3-Year Avg', linewidth=2, markersize=5,
+                        linestyle=':', alpha=0.7, color='#90CAF9')
+            
+            ax4.set_xlabel('Winter Year', fontweight='bold')
+            ax4.set_ylabel('Snowfall (inches)', fontweight='bold')
+            ax4.set_title('Lag Features: Snowfall Trends', fontweight='bold', fontsize=11)
+            ax4.legend(fontsize=8)
+            ax4.grid(True, alpha=0.3)
+            plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        else:
+            ax4.text(0.5, 0.5, 'Snowfall lag data not available',
+                    ha='center', va='center', transform=ax4.transAxes)
+            ax4.axis('off')
+        
+        # 5. Temperature Lag Features (middle row, right)
+        ax5 = fig.add_subplot(gs[1, 2])
+        
+        if 'winter_year' in correlation_df.columns and 'prev_winter_temp_avg' in correlation_df.columns:
+            recent_data = correlation_df.tail(15)
+            
+            ax5.plot(recent_data['winter_year'], recent_data['prev_winter_temp_avg'],
+                    marker='o', label='Prev Winter Temp', linewidth=2, markersize=6, color='#FF5722')
+            
+            if 'rolling_2yr_temp' in recent_data.columns:
+                ax5.plot(recent_data['winter_year'], recent_data['rolling_2yr_temp'],
+                        marker='s', label='2-Year Avg', linewidth=2, markersize=5,
+                        linestyle='--', alpha=0.7, color='#FF8A65')
+            
+            if 'rolling_3yr_temp' in recent_data.columns:
+                ax5.plot(recent_data['winter_year'], recent_data['rolling_3yr_temp'],
+                        marker='^', label='3-Year Avg', linewidth=2, markersize=5,
+                        linestyle=':', alpha=0.7, color='#FFAB91')
+            
+            ax5.set_xlabel('Winter Year', fontweight='bold')
+            ax5.set_ylabel('Temperature (°F)', fontweight='bold')
+            ax5.set_title('Lag Features: Temperature Trends', fontweight='bold', fontsize=11)
+            ax5.legend(fontsize=8)
+            ax5.grid(True, alpha=0.3)
+            plt.setp(ax5.xaxis.get_majorticklabels(), rotation=45, ha='right')
+        else:
+            ax5.text(0.5, 0.5, 'Temperature lag data not available',
+                    ha='center', va='center', transform=ax5.transAxes)
+            ax5.axis('off')
+        
+        # 6. Feature List (bottom row, left and center columns)
+        ax6 = fig.add_subplot(gs[2, :2])
+        
+        # Create a comprehensive feature list
+        feature_list_text = "Complete Feature Set Used for Prediction:\n\n"
+        
+        # Organize features by category
+        summer_features = sorted([c for c in correlation_df.columns if 'summer' in c and c.startswith('prev_')])
+        fall_features = sorted([c for c in correlation_df.columns if 'fall' in c and c.startswith('prev_')])
+        enso_features = sorted([c for c in correlation_df.columns if c.startswith('enso_')])
+        lag_features = sorted([c for c in correlation_df.columns if 'prev_winter' in c])
+        rolling_features = sorted([c for c in correlation_df.columns if c.startswith('rolling_')])
+        
+        if summer_features:
+            feature_list_text += "Summer (Prev Year):\n"
+            for feat in summer_features:
+                feature_list_text += f"  • {feat}\n"
+        
+        if fall_features:
+            feature_list_text += "\nFall (Prev Year):\n"
+            for feat in fall_features:
+                feature_list_text += f"  • {feat}\n"
+        
+        if enso_features:
+            feature_list_text += "\nENSO Indicators:\n"
+            for feat in enso_features:
+                feature_list_text += f"  • {feat}\n"
+        
+        if lag_features:
+            feature_list_text += "\nPrevious Winter:\n"
+            for feat in lag_features:
+                feature_list_text += f"  • {feat}\n"
+        
+        if rolling_features:
+            feature_list_text += "\nRolling Averages:\n"
+            for feat in rolling_features:
+                feature_list_text += f"  • {feat}\n"
+        
+        ax6.text(0.05, 0.95, feature_list_text, transform=ax6.transAxes,
+                fontsize=9, verticalalignment='top', family='monospace',
+                bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.3))
+        ax6.axis('off')
+        ax6.set_title('Feature Inventory', fontweight='bold', fontsize=12, loc='left')
+        
+        # 7. Key Statistics (bottom right)
+        ax7 = fig.add_subplot(gs[2, 2])
+        
+        stats_text = "Dataset Statistics:\n\n"
+        stats_text += f"Total Records: {len(correlation_df)}\n\n"
+        
+        if 'winter_severity' in correlation_df.columns:
+            stats_text += f"Severity Range:\n"
+            stats_text += f"  Min: {correlation_df['winter_severity'].min():.1f}\n"
+            stats_text += f"  Max: {correlation_df['winter_severity'].max():.1f}\n"
+            stats_text += f"  Mean: {correlation_df['winter_severity'].mean():.1f}\n\n"
+        
+        if 'winter_snowfall' in correlation_df.columns:
+            stats_text += f"Snowfall Range:\n"
+            stats_text += f"  Min: {correlation_df['winter_snowfall'].min():.1f}\"\n"
+            stats_text += f"  Max: {correlation_df['winter_snowfall'].max():.1f}\"\n"
+            stats_text += f"  Mean: {correlation_df['winter_snowfall'].mean():.1f}\"\n\n"
+        
+        # Add feature count
+        total_features = len([c for c in correlation_df.columns 
+                             if c.startswith('prev_') or c.startswith('enso_') 
+                             or c.startswith('rolling_')])
+        stats_text += f"Total Features: {total_features}\n"
+        
+        # If prediction is provided, add current values
+        if prediction and 'input_features' in prediction:
+            stats_text += f"\nCurrent Prediction:\n"
+            stats_text += f"  Category: {prediction['predicted_category']}\n"
+            stats_text += f"  Confidence: {prediction['confidence']*100:.1f}%\n"
+        
+        ax7.text(0.1, 0.95, stats_text, transform=ax7.transAxes,
+                fontsize=9, verticalalignment='top', family='monospace',
+                bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+        ax7.axis('off')
+        ax7.set_title('Summary Statistics', fontweight='bold', fontsize=12, loc='left')
+        
+        plt.tight_layout()
+        
+        # Save the figure
+        filename = "feature_analysis.png"
+        filepath = os.path.join(self.output_dir, filename)
+        plt.savefig(filepath, dpi=150, bbox_inches='tight')
+        plt.close()
+        
+        return filepath
