@@ -5,6 +5,7 @@ Fetches data, analyzes patterns, and predicts future winter conditions.
 
 import sys
 import os
+import traceback
 from datetime import datetime
 
 # Add src to path
@@ -210,6 +211,13 @@ def main():
         print(f"✓ Prediction visualization saved: {prediction_path}")
         print(f"✓ Historical winters visualization saved: {historical_path}")
         
+        # Generate the new feature analysis visualization
+        print("\n⟳ Creating feature analysis visualization...")
+        feature_analysis_path = visualizer.visualize_feature_analysis(
+            correlation_df, prediction
+        )
+        print(f"✓ Feature analysis visualization saved: {feature_analysis_path}")
+        
         print("\n  Visualizations include:")
         print(f"    • Winter {prediction['winter_label']} prediction details")
         print(f"    • ENSO phase information ({enso_info['phase']})")
@@ -217,10 +225,13 @@ def main():
         print(f"    • Temperature and snowfall predictions")
         print(f"    • Last 10 years of historical winter data with ENSO phases")
         print(f"    • Temperature trends, snowfall patterns, and severity distribution")
+        print(f"    • Comprehensive feature analysis with lag features and rolling averages")
+        print(f"    • Feature correlations and temporal trends")
         
     except Exception as e:
         print(f"\n✗ Error generating visualizations: {e}")
         print("  Continuing without visualizations...")
+        traceback.print_exc()
     
     # Summary
     print_section("Summary")
