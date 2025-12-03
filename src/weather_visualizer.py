@@ -319,24 +319,21 @@ class WeatherVisualizer:
         
         # Check if ENSO data is available
         if 'enso_phase' in recent_winters.columns:
-            # Create a table showing ENSO and severity for each winter
+            # Create a table showing ENSO phases for each winter
             table_data = []
             for _, row in recent_winters.iterrows():
                 enso_short = self.ENSO_PHASE_ABBREVIATIONS.get(row['enso_phase'], '?')
-                table_data.append([
-                    row['winter_label'],
-                    enso_short,
-                    row['severity_category'][:4]  # First 4 chars of severity
-                ])
+                table_data.append([row['winter_label'], enso_short])
             
             # Create text display
+            separator_width = 15
             enso_text = "ENSO Phase\n\n"
             enso_text += "Year     ENSO\n"
-            enso_text += "─" * 15 + "\n"
+            enso_text += "─" * separator_width + "\n"
             for row_data in table_data:
                 enso_text += f"{row_data[0]:<9}{row_data[1]}\n"
             
-            enso_text += "\n" + "─" * 15 + "\n"
+            enso_text += "\n" + "─" * separator_width + "\n"
             enso_text += "EN = El Niño\n"
             enso_text += "LN = La Niña\n"
             enso_text += "N  = Neutral"
