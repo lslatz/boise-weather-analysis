@@ -39,9 +39,6 @@ ENV/
 *.sqlite
 weather_data/
 
-# But include visualization outputs
-!visualizations/*.png
-
 # Jupyter Notebook
 .ipynb_checkpoints
 

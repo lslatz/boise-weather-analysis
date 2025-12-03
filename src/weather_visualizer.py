@@ -22,9 +22,8 @@ class WeatherVisualizer:
         """
         self.output_dir = output_dir
         
-        # Create output directory if it doesn't exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        # Create output directory if it doesn't exist (thread-safe)
+        os.makedirs(output_dir, exist_ok=True)
         
         # Set the style for better-looking plots
         sns.set_style("whitegrid")
@@ -54,11 +53,12 @@ class WeatherVisualizer:
         colors = ['#4CAF50', '#FFC107', '#FF5722', '#9C27B0'][:len(categories)]
         bars = ax1.barh(categories, probabilities, color=colors, alpha=0.7)
         
-        # Highlight the predicted category
-        predicted_idx = categories.index(prediction['predicted_category'])
-        bars[predicted_idx].set_alpha(1.0)
-        bars[predicted_idx].set_edgecolor('black')
-        bars[predicted_idx].set_linewidth(2)
+        # Highlight the predicted category (with validation)
+        if prediction['predicted_category'] in categories:
+            predicted_idx = categories.index(prediction['predicted_category'])
+            bars[predicted_idx].set_alpha(1.0)
+            bars[predicted_idx].set_edgecolor('black')
+            bars[predicted_idx].set_linewidth(2)
         
         ax1.set_xlabel('Probability (%)', fontweight='bold')
         ax1.set_title('Winter Severity Probabilities', fontweight='bold')
