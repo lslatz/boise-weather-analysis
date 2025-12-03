@@ -455,7 +455,7 @@ class WeatherVisualizer:
             
             ax3.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
             ax3.set_ylabel('Severity Score', fontweight='bold', fontsize=9)
-            ax3.set_title('Lag Features: Winter Severity Trends', fontweight='bold', fontsize=10, pad=10)
+            ax3.set_title('Lag Features: Winter Severity Trends', fontweight='bold', fontsize=11, pad=10)
             ax3.legend(fontsize=7, loc='upper left')
             ax3.grid(True, alpha=0.3)
             plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
@@ -485,7 +485,7 @@ class WeatherVisualizer:
             
             ax4.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
             ax4.set_ylabel('Snowfall (inches)', fontweight='bold', fontsize=9)
-            ax4.set_title('Lag Features: Snowfall Trends', fontweight='bold', fontsize=10, pad=10)
+            ax4.set_title('Lag Features: Snowfall Trends', fontweight='bold', fontsize=11, pad=10)
             ax4.legend(fontsize=7, loc='upper left')
             ax4.grid(True, alpha=0.3)
             plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
@@ -515,7 +515,7 @@ class WeatherVisualizer:
             
             ax5.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
             ax5.set_ylabel('Temperature (°F)', fontweight='bold', fontsize=9)
-            ax5.set_title('Lag Features: Temperature Trends', fontweight='bold', fontsize=10, pad=10)
+            ax5.set_title('Lag Features: Temperature Trends', fontweight='bold', fontsize=11, pad=10)
             ax5.legend(fontsize=7, loc='upper left')
             ax5.grid(True, alpha=0.3)
             plt.setp(ax5.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
