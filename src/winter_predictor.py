@@ -255,11 +255,20 @@ class WinterPredictor:
         
         # Get ENSO classification for the target winter
         enso_info = analyzer.enso_classifier.classify_winter(target_winter_year)
+        
+        # Use 0.0 (neutral) for ONI when data is unavailable
+        # This is consistent with how missing ENSO data is treated during training
+        if enso_info["oni_value"] is not None:
+            oni_value = enso_info["oni_value"]
+        else:
+            # Fall back to historical mean from training data if available
+            oni_value = self.feature_means.get("enso_oni", 0.0)
+        
         enso_features = {
-            "oni": enso_info["oni_value"] if enso_info["oni_value"] is not None else 0.0,
+            "oni": oni_value,
             "el_nino": 1.0 if enso_info["phase"] == "El Niño" else 0.0,
             "la_nina": 1.0 if enso_info["phase"] == "La Niña" else 0.0,
-            "neutral": 1.0 if enso_info["phase"] == "Neutral" else 0.0,
+            "neutral": 1.0 if enso_info["phase"] in ["Neutral", "Unknown"] else 0.0,
         }
         
         # Make prediction

@@ -23,6 +23,13 @@ class TestWinterPredictor(unittest.TestCase):
         
         # Create sample correlation data for training
         n_samples = 30
+        
+        # Generate mutually exclusive ENSO phases
+        enso_phases = np.random.choice([0, 1, 2], n_samples)  # 0=El Niño, 1=La Niña, 2=Neutral
+        enso_el_nino = (enso_phases == 0).astype(float)
+        enso_la_nina = (enso_phases == 1).astype(float)
+        enso_neutral = (enso_phases == 2).astype(float)
+        
         self.sample_correlation_df = pd.DataFrame({
             "winter_year": range(1990, 1990 + n_samples),
             "prev_summer_temp": np.random.uniform(70, 90, n_samples),
@@ -31,9 +38,9 @@ class TestWinterPredictor(unittest.TestCase):
             "prev_fall_temp": np.random.uniform(40, 60, n_samples),
             "prev_fall_precip": np.random.uniform(2, 6, n_samples),
             "enso_oni": np.random.uniform(-2, 2, n_samples),
-            "enso_el_nino": np.random.choice([0.0, 1.0], n_samples),
-            "enso_la_nina": np.random.choice([0.0, 1.0], n_samples),
-            "enso_neutral": np.random.choice([0.0, 1.0], n_samples),
+            "enso_el_nino": enso_el_nino,
+            "enso_la_nina": enso_la_nina,
+            "enso_neutral": enso_neutral,
             "winter_severity": np.random.uniform(10, 50, n_samples),
             "winter_snowfall": np.random.uniform(5, 30, n_samples),
             "winter_temp_avg": np.random.uniform(25, 40, n_samples),
