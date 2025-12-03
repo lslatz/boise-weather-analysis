@@ -275,9 +275,13 @@ class WinterPredictor:
             (winter_df["severity_score"] <= severity_score + 5)
         ].sort_values("winter_year", ascending=False)
         
+        # Select columns to include in comparison, including ENSO if available
+        columns_to_include = ["winter_label", "severity_category", "avg_temp", "total_snowfall"]
+        if "enso_phase" in similar_winters.columns:
+            columns_to_include.append("enso_phase")
+        
         comparison = {
-            "similar_winters": similar_winters[["winter_label", "severity_category", 
-                                                "avg_temp", "total_snowfall"]].head(5).to_dict("records"),
+            "similar_winters": similar_winters[columns_to_include].head(5).to_dict("records"),
             "historical_avg_severity": float(winter_df["severity_score"].mean()),
             "historical_avg_snowfall": float(winter_df["total_snowfall"].mean()),
             "historical_avg_temp": float(winter_df["avg_temp"].mean()),

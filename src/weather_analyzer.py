@@ -6,6 +6,7 @@ Calculates seasonal features and correlations for winter prediction.
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from enso_classifier import ENSOClassifier
 
 
 class WeatherAnalyzer:
@@ -33,6 +34,7 @@ class WeatherAnalyzer:
             df: DataFrame with daily weather data
         """
         self.df = df.copy()
+        self.enso_classifier = ENSOClassifier()
         self._prepare_data()
     
     def _prepare_data(self):
@@ -170,6 +172,13 @@ class WeatherAnalyzer:
             features["severity_category"] = self._categorize_winter_severity(
                 features["severity_score"]
             )
+            
+            # Add ENSO classification for this winter
+            enso_info = self.enso_classifier.classify_winter(winter_year)
+            features["enso_phase"] = enso_info["phase"]
+            features["enso_strength"] = enso_info["strength"]
+            features["enso_oni"] = enso_info["oni_value"]
+            features["enso_description"] = enso_info["description"]
             
             winter_features.append(features)
         
