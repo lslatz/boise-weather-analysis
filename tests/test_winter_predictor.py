@@ -23,6 +23,13 @@ class TestWinterPredictor(unittest.TestCase):
         
         # Create sample correlation data for training
         n_samples = 30
+        
+        # Generate mutually exclusive ENSO phases
+        enso_phases = np.random.choice([0, 1, 2], n_samples)  # 0=El Niño, 1=La Niña, 2=Neutral
+        enso_el_nino = (enso_phases == 0).astype(float)
+        enso_la_nina = (enso_phases == 1).astype(float)
+        enso_neutral = (enso_phases == 2).astype(float)
+        
         self.sample_correlation_df = pd.DataFrame({
             "winter_year": range(1990, 1990 + n_samples),
             "prev_summer_temp": np.random.uniform(70, 90, n_samples),
@@ -30,6 +37,10 @@ class TestWinterPredictor(unittest.TestCase):
             "prev_summer_hot_days": np.random.randint(0, 30, n_samples),
             "prev_fall_temp": np.random.uniform(40, 60, n_samples),
             "prev_fall_precip": np.random.uniform(2, 6, n_samples),
+            "enso_oni": np.random.uniform(-2, 2, n_samples),
+            "enso_el_nino": enso_el_nino,
+            "enso_la_nina": enso_la_nina,
+            "enso_neutral": enso_neutral,
             "winter_severity": np.random.uniform(10, 50, n_samples),
             "winter_snowfall": np.random.uniform(5, 30, n_samples),
             "winter_temp_avg": np.random.uniform(25, 40, n_samples),
@@ -84,8 +95,14 @@ class TestWinterPredictor(unittest.TestCase):
             "temp_mean": 50.0,
             "precip_total": 4.0
         }
+        enso_features = {
+            "oni": 1.5,
+            "el_nino": 1.0,
+            "la_nina": 0.0,
+            "neutral": 0.0
+        }
         
-        prediction = self.predictor.predict(summer_features, fall_features)
+        prediction = self.predictor.predict(summer_features, fall_features, enso_features)
         
         # Check that prediction has expected keys
         expected_keys = ["severity_score", "predicted_category", "category_probabilities",
@@ -106,6 +123,19 @@ class TestWinterPredictor(unittest.TestCase):
         
         with self.assertRaises(ValueError):
             self.predictor.predict(summer_features)
+    
+    def test_enso_features_included(self):
+        """Test that ENSO features are included in the model."""
+        self.predictor.train(self.sample_correlation_df)
+        
+        # Check that ENSO features are in the feature columns
+        self.assertIn("enso_oni", self.predictor.feature_columns)
+        self.assertIn("enso_el_nino", self.predictor.feature_columns)
+        self.assertIn("enso_la_nina", self.predictor.feature_columns)
+        self.assertIn("enso_neutral", self.predictor.feature_columns)
+        
+        # Check that all 9 features are included (5 weather + 4 ENSO)
+        self.assertEqual(len(self.predictor.feature_columns), 9)
     
     def test_feature_importance(self):
         """Test that feature importance can be retrieved."""

@@ -116,6 +116,20 @@ def main():
         elif corr < -0.3:
             print(f"      → Warm falls tend to lead to colder winters")
     
+    if correlations.get("enso_oni_to_winter_severity"):
+        corr = correlations["enso_oni_to_winter_severity"]
+        print(f"    • ENSO (ONI) vs Winter severity: {corr:.3f}")
+        if abs(corr) > 0.2:
+            direction = "less severe" if corr < 0 else "more severe"
+            print(f"      → El Niño conditions tend toward {direction} winters")
+    
+    if correlations.get("enso_oni_to_winter_temp"):
+        corr = correlations["enso_oni_to_winter_temp"]
+        print(f"    • ENSO (ONI) vs Winter temperature: {corr:.3f}")
+        if abs(corr) > 0.2:
+            direction = "warmer" if corr > 0 else "colder"
+            print(f"      → El Niño conditions tend toward {direction} winters")
+    
     # Train prediction model
     print_section("Training Prediction Model")
     predictor = WinterPredictor()
@@ -212,11 +226,12 @@ def main():
     print_section("Summary")
     print("\nThis analysis examined historical weather patterns in Boise, Idaho to predict")
     print("the severity of Winter 2025-2026. The model uses machine learning to identify")
-    print("relationships between seasonal weather patterns (summer and fall conditions)")
-    print("and subsequent winter characteristics.")
+    print("relationships between seasonal weather patterns (summer and fall conditions),")
+    print("ENSO phases, and subsequent winter characteristics.")
     print("\nKey factors influencing winter predictions include:")
     print("  • Summer temperatures and extreme heat days")
     print("  • Fall temperature patterns and precipitation")
+    print("  • ENSO phase and ONI (Oceanic Niño Index) values")
     print("  • Historical correlation patterns between seasons")
     print("\nThe prediction model can be updated and rerun as more data becomes available")
     print("throughout 2025 to refine the winter 2025-2026 forecast.")

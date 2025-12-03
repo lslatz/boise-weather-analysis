@@ -22,17 +22,19 @@ This application:
 ### Analysis Capabilities
 - **Seasonal Aggregation**: Calculates features for Winter, Spring, Summer, and Fall
 - **Winter Classification**: Categorizes winters as Mild, Moderate, Severe, or Extreme
-- **Correlation Analysis**: Identifies relationships between seasonal patterns
+- **ENSO Integration**: Classifies El Niño, La Niña, and Neutral phases for each winter
+- **Correlation Analysis**: Identifies relationships between seasonal patterns and ENSO phases
 - **Trend Detection**: Tracks warming/cooling trends over recent years
 
 ### Prediction Model
-- **Multi-factor Prediction**: Uses Random Forest models to predict winter conditions
+- **Multi-factor Prediction**: Uses Random Forest models with seasonal weather data and ENSO state
 - **Key Predictions**:
   - Winter severity category (Mild/Moderate/Severe/Extreme)
   - Average winter temperature
   - Total snowfall
   - Confidence scores and probability distributions
-- **Historical Comparison**: Compares predictions to similar past winters
+- **ENSO-Enhanced**: Incorporates ONI (Oceanic Niño Index) and ENSO phase classifications
+- **Historical Comparison**: Compares predictions to similar past winters with ENSO context
 
 ### Visualizations
 - **Prediction Charts**: Comprehensive visualization of winter predictions including:
@@ -118,6 +120,10 @@ to predict winter conditions based on preceding seasonal data.
 
 Based on weather patterns from 2025:
 
+  ENSO Conditions: Weak La Niña (ONI: -0.5°C)
+  La Niña winters in the Pacific Northwest tend to be cooler and wetter
+  than average, potentially bringing more snowfall to the region.
+
   Predicted Category: Moderate
   Confidence: 68.5%
 
@@ -139,9 +145,10 @@ Based on weather patterns from 2025:
 
   Visualizations include:
     • Winter 2025-2026 prediction details
+    • ENSO phase information (La Niña)
     • Category probabilities and severity score
     • Temperature and snowfall predictions
-    • Last 10 years of historical winter data
+    • Last 10 years of historical winter data with ENSO phases
     • Temperature trends, snowfall patterns, and severity distribution
 ```
 
@@ -228,19 +235,31 @@ Winters are then categorized as:
 - **Severe**: Cold temperatures, significant snowfall
 - **Extreme**: Exceptionally cold and snowy
 
-### 4. Correlation Analysis
+### 4. ENSO Classification
+Each winter is classified by its ENSO phase using historical ONI (Oceanic Niño Index) data:
+- **El Niño**: Warm phase (ONI ≥ +0.5°C) - typically warmer, drier winters in Pacific Northwest
+- **La Niña**: Cool phase (ONI ≤ -0.5°C) - typically cooler, wetter winters with more snowfall
+- **Neutral**: Normal conditions (-0.5°C < ONI < +0.5°C)
+
+### 5. Correlation Analysis
 The system analyzes relationships between:
 - Summer temperature → Winter severity
 - Summer heat waves → Winter snowfall
 - Fall precipitation → Winter conditions
+- ENSO phase → Winter temperature and severity
 - Long-term seasonal trends
 
-### 5. Prediction
+### 6. Prediction
 Random Forest machine learning models predict:
 - Winter severity score
 - Expected snowfall
 - Average temperature
 - Category classification with confidence scores
+
+The models incorporate:
+- Previous summer conditions (temperature, precipitation, hot days)
+- Previous fall conditions (temperature, precipitation)
+- ENSO state (ONI value and phase classification)
 
 The models learn from 80+ years of historical data to identify patterns that persist across decades.
 

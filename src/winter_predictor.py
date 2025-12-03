@@ -36,7 +36,7 @@ class WinterPredictor:
         # Select features for prediction
         feature_cols = []
         for col in correlation_df.columns:
-            if col.startswith("prev_"):
+            if col.startswith("prev_") or col.startswith("enso_"):
                 feature_cols.append(col)
         
         self.feature_columns = feature_cols
@@ -132,12 +132,13 @@ class WinterPredictor:
         for i, (feature, importance) in enumerate(feature_importance[:5], 1):
             print(f"  {i}. {feature}: {importance:.3f}")
     
-    def predict(self, summer_features, fall_features=None):
-        """Predict winter conditions based on summer (and optionally fall) data.
+    def predict(self, summer_features, fall_features=None, enso_features=None):
+        """Predict winter conditions based on summer (and optionally fall) data and ENSO state.
         
         Args:
             summer_features: Dictionary with summer weather features
             fall_features: Optional dictionary with fall weather features
+            enso_features: Optional dictionary with ENSO features (oni, el_nino, la_nina, neutral)
             
         Returns:
             dict: Predicted winter conditions
@@ -162,6 +163,17 @@ class WinterPredictor:
                 feature_vector["prev_fall_temp"] = fall_features["temp_mean"]
             if "precip_total" in fall_features:
                 feature_vector["prev_fall_precip"] = fall_features["precip_total"]
+        
+        # Add ENSO features if provided
+        if enso_features:
+            if "oni" in enso_features:
+                feature_vector["enso_oni"] = enso_features["oni"]
+            if "el_nino" in enso_features:
+                feature_vector["enso_el_nino"] = enso_features["el_nino"]
+            if "la_nina" in enso_features:
+                feature_vector["enso_la_nina"] = enso_features["la_nina"]
+            if "neutral" in enso_features:
+                feature_vector["enso_neutral"] = enso_features["neutral"]
         
         # Ensure all required features are present
         X = []
@@ -241,8 +253,26 @@ class WinterPredictor:
                 fall_features["temp_mean"] = row["fall_temp_mean"]
                 fall_features["precip_total"] = row["fall_precip_total"]
         
+        # Get ENSO classification for the target winter
+        enso_info = analyzer.enso_classifier.classify_winter(target_winter_year)
+        
+        # Use 0.0 (neutral) for ONI when data is unavailable
+        # This is consistent with how missing ENSO data is treated during training
+        if enso_info["oni_value"] is not None:
+            oni_value = enso_info["oni_value"]
+        else:
+            # Fall back to historical mean from training data if available
+            oni_value = self.feature_means.get("enso_oni", 0.0)
+        
+        enso_features = {
+            "oni": oni_value,
+            "el_nino": 1.0 if enso_info["phase"] == "El Niño" else 0.0,
+            "la_nina": 1.0 if enso_info["phase"] == "La Niña" else 0.0,
+            "neutral": 1.0 if enso_info["phase"] in ["Neutral", "Unknown"] else 0.0,
+        }
+        
         # Make prediction
-        prediction = self.predict(summer_features, fall_features)
+        prediction = self.predict(summer_features, fall_features, enso_features)
         
         # Add context
         prediction["winter_year"] = target_winter_year
@@ -252,7 +282,8 @@ class WinterPredictor:
         # Add input features for transparency
         prediction["input_features"] = {
             "summer": summer_features,
-            "fall": fall_features
+            "fall": fall_features,
+            "enso": enso_features
         }
         
         return prediction
