@@ -161,19 +161,46 @@ class WeatherVisualizer:
         
         # Add ENSO information if available
         if enso_info and enso_info.get('phase') != 'Unknown':
-            feature_text += f"ENSO Phase: {enso_info['phase']}\n"
+            feature_text += f"ENSO Phase: {enso_info['phase']}"
             if enso_info.get('strength') and enso_info['strength'] != 'N/A':
-                feature_text += f"Strength: {enso_info['strength']}\n"
-            feature_text += f"ONI: {enso_info['oni_value']:+.1f}°C\n\n"
+                feature_text += f" ({enso_info['strength']})"
+            feature_text += f", ONI: {enso_info['oni_value']:+.1f}°C\n\n"
         
         if 'input_features' in prediction:
-            feature_text += "Summer Features:\n"
-            for key, value in prediction['input_features']['summer'].items():
-                feature_text += f"  • {key}: {value:.2f}\n"
+            # Summer features
+            if prediction['input_features'].get('summer'):
+                feature_text += "Summer 2025:\n"
+                summer = prediction['input_features']['summer']
+                if 'temp_mean' in summer:
+                    feature_text += f"  Avg Temp: {summer['temp_mean']:.1f}°F\n"
+                if 'precip_total' in summer:
+                    feature_text += f"  Precip: {summer['precip_total']:.2f}\"\n"
+                if 'hot_days' in summer:
+                    feature_text += f"  Hot Days (>90°F): {summer['hot_days']:.0f}\n"
             
-            feature_text += "\nFall Features:\n"
-            for key, value in prediction['input_features']['fall'].items():
-                feature_text += f"  • {key}: {value:.2f}\n"
+            # Fall features
+            if prediction['input_features'].get('fall'):
+                feature_text += "\nFall 2025:\n"
+                fall = prediction['input_features']['fall']
+                if 'temp_mean' in fall:
+                    feature_text += f"  Avg Temp: {fall['temp_mean']:.1f}°F\n"
+                if 'precip_total' in fall:
+                    feature_text += f"  Precip: {fall['precip_total']:.2f}\"\n"
+            
+            # Lag features (previous winter data)
+            if prediction['input_features'].get('lag'):
+                feature_text += "\nPrevious Winter (2024-25):\n"
+                lag = prediction['input_features']['lag']
+                if 'prev_winter_severity' in lag:
+                    feature_text += f"  Severity: {lag['prev_winter_severity']:.1f}\n"
+                if 'prev_winter_snowfall' in lag:
+                    feature_text += f"  Snowfall: {lag['prev_winter_snowfall']:.1f}\"\n"
+                if 'prev_winter_temp_avg' in lag:
+                    feature_text += f"  Avg Temp: {lag['prev_winter_temp_avg']:.1f}°F\n"
+                
+                # Rolling averages
+                if 'rolling_3yr_severity' in lag:
+                    feature_text += f"\n3-Year Avg Severity: {lag['rolling_3yr_severity']:.1f}\n"
         
         feature_text += f"\nConfidence: {prediction['confidence'] * 100:.1f}%"
         
