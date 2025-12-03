@@ -5,6 +5,7 @@ Fetches data, analyzes patterns, and predicts future winter conditions.
 
 import sys
 import os
+import traceback
 from datetime import datetime
 
 # Add src to path
@@ -230,7 +231,6 @@ def main():
     except Exception as e:
         print(f"\n✗ Error generating visualizations: {e}")
         print("  Continuing without visualizations...")
-        import traceback
         traceback.print_exc()
     
     # Summary

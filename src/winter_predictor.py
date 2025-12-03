@@ -178,24 +178,14 @@ class WinterPredictor:
         
         # Add lag features if provided
         if lag_features:
-            if "prev_winter_severity" in lag_features:
-                feature_vector["prev_winter_severity"] = lag_features["prev_winter_severity"]
-            if "prev_winter_snowfall" in lag_features:
-                feature_vector["prev_winter_snowfall"] = lag_features["prev_winter_snowfall"]
-            if "prev_winter_temp_avg" in lag_features:
-                feature_vector["prev_winter_temp_avg"] = lag_features["prev_winter_temp_avg"]
-            if "rolling_2yr_severity" in lag_features:
-                feature_vector["rolling_2yr_severity"] = lag_features["rolling_2yr_severity"]
-            if "rolling_2yr_snowfall" in lag_features:
-                feature_vector["rolling_2yr_snowfall"] = lag_features["rolling_2yr_snowfall"]
-            if "rolling_2yr_temp" in lag_features:
-                feature_vector["rolling_2yr_temp"] = lag_features["rolling_2yr_temp"]
-            if "rolling_3yr_severity" in lag_features:
-                feature_vector["rolling_3yr_severity"] = lag_features["rolling_3yr_severity"]
-            if "rolling_3yr_snowfall" in lag_features:
-                feature_vector["rolling_3yr_snowfall"] = lag_features["rolling_3yr_snowfall"]
-            if "rolling_3yr_temp" in lag_features:
-                feature_vector["rolling_3yr_temp"] = lag_features["rolling_3yr_temp"]
+            lag_feature_keys = [
+                "prev_winter_severity", "prev_winter_snowfall", "prev_winter_temp_avg",
+                "rolling_2yr_severity", "rolling_2yr_snowfall", "rolling_2yr_temp",
+                "rolling_3yr_severity", "rolling_3yr_snowfall", "rolling_3yr_temp"
+            ]
+            for key in lag_feature_keys:
+                if key in lag_features:
+                    feature_vector[key] = lag_features[key]
         
         # Ensure all required features are present
         X = []
