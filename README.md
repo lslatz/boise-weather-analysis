@@ -291,7 +291,7 @@ Potential improvements:
 - Implement ensemble models combining multiple prediction approaches
 - ~~Add visualization of trends and predictions~~ ✓ **Completed**
 - Create a web interface for easier interaction
-- Include more sophisticated climate indicators (e.g., El Niño/La Niña)
+- ~~Include more sophisticated climate indicators (e.g., El Niño/La Niña)~~ ✓ **Completed**
 - Add interactive visualizations with filtering and zooming capabilities
 
 ## Contributing

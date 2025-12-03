@@ -190,7 +190,7 @@ def main():
     
     try:
         prediction_path, historical_path = visualizer.visualize_both(
-            prediction, winter_df, n_years=10
+            prediction, winter_df, n_years=10, enso_info=enso_info
         )
         
         print(f"✓ Prediction visualization saved: {prediction_path}")
@@ -198,9 +198,10 @@ def main():
         
         print("\n  Visualizations include:")
         print(f"    • Winter {prediction['winter_label']} prediction details")
+        print(f"    • ENSO phase information ({enso_info['phase']})")
         print(f"    • Category probabilities and severity score")
         print(f"    • Temperature and snowfall predictions")
-        print(f"    • Last 10 years of historical winter data")
+        print(f"    • Last 10 years of historical winter data with ENSO phases")
         print(f"    • Temperature trends, snowfall patterns, and severity distribution")
         
     except Exception as e:

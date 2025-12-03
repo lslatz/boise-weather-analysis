@@ -31,19 +31,24 @@ class WeatherVisualizer:
         plt.rcParams['figure.figsize'] = (12, 6)
         plt.rcParams['font.size'] = 10
     
-    def visualize_prediction(self, prediction, winter_df=None):
+    def visualize_prediction(self, prediction, winter_df=None, enso_info=None):
         """Create visualization for winter prediction.
         
         Args:
             prediction: Dictionary with prediction results
             winter_df: Optional DataFrame with historical winter data
+            enso_info: Optional dict with ENSO classification for the predicted winter
             
         Returns:
             str: Path to saved figure
         """
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-        fig.suptitle(f"Winter {prediction['winter_label']} Prediction", 
-                     fontsize=16, fontweight='bold')
+        
+        # Add ENSO to title if available
+        title = f"Winter {prediction['winter_label']} Prediction"
+        if enso_info and enso_info.get('phase') != 'Unknown':
+            title += f" - {enso_info['description']}"
+        fig.suptitle(title, fontsize=16, fontweight='bold')
         
         # 1. Category Probabilities (top-left)
         ax1 = axes[0, 0]
@@ -146,6 +151,13 @@ class WeatherVisualizer:
         # Display the features used for prediction
         feature_text = f"Prediction Based on {prediction['based_on_year']} Data\n\n"
         
+        # Add ENSO information if available
+        if enso_info and enso_info.get('phase') != 'Unknown':
+            feature_text += f"ENSO Phase: {enso_info['phase']}\n"
+            if enso_info.get('strength') and enso_info['strength'] != 'N/A':
+                feature_text += f"Strength: {enso_info['strength']}\n"
+            feature_text += f"ONI: {enso_info['oni_value']:+.1f}°C\n\n"
+        
         if 'input_features' in prediction:
             feature_text += "Summer Features:\n"
             for key, value in prediction['input_features']['summer'].items():
@@ -202,9 +214,26 @@ class WeatherVisualizer:
                 marker='s', linewidth=1, markersize=6, color='#4CAF50', 
                 alpha=0.6, linestyle='--', label='Avg Min Temp')
         
+        # Add ENSO phase markers if available
+        if 'enso_phase' in recent_winters.columns:
+            for i, (idx, row) in enumerate(recent_winters.iterrows()):
+                if row['enso_phase'] != 'Unknown':
+                    # Color code ENSO phases
+                    if row['enso_phase'] == 'El Niño':
+                        marker_color = '#FF6B6B'  # Red for El Niño
+                    elif row['enso_phase'] == 'La Niña':
+                        marker_color = '#4ECDC4'  # Blue for La Niña
+                    else:
+                        marker_color = '#95A5A6'  # Gray for Neutral
+                    
+                    # Add ENSO marker at the bottom of the chart
+                    y_pos = ax1.get_ylim()[0] + (ax1.get_ylim()[1] - ax1.get_ylim()[0]) * 0.02
+                    ax1.plot(i, y_pos, marker='s', markersize=10, 
+                            color=marker_color, alpha=0.7, zorder=10)
+        
         ax1.set_xlabel('Winter', fontweight='bold')
         ax1.set_ylabel('Temperature (°F)', fontweight='bold')
-        ax1.set_title('Winter Temperature Trends', fontweight='bold')
+        ax1.set_title('Winter Temperature Trends with ENSO Phases', fontweight='bold')
         ax1.legend()
         ax1.grid(True, alpha=0.3)
         plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
@@ -273,20 +302,55 @@ class WeatherVisualizer:
         ax3.text(len(recent_winters) - 0.5, 50, 'Extreme', 
                 ha='right', va='bottom', fontsize=8, alpha=0.7)
         
-        # 4. Category Distribution (bottom-right)
+        # 4. ENSO Phase & Severity Summary (bottom-right)
         ax4 = axes[1, 1]
         
-        category_counts = recent_winters['severity_category'].value_counts()
-        colors_pie = [severity_colors.get(cat, '#64B5F6') for cat in category_counts.index]
-        
-        wedges, texts, autotexts = ax4.pie(category_counts.values, 
-                                           labels=category_counts.index,
-                                           colors=colors_pie,
-                                           autopct='%1.0f%%',
-                                           startangle=90,
-                                           textprops={'fontsize': 11, 'fontweight': 'bold'})
-        
-        ax4.set_title(f'Winter Severity Distribution\n(Last {n_years} Years)', fontweight='bold')
+        # Check if ENSO data is available
+        if 'enso_phase' in recent_winters.columns:
+            # Create a table showing ENSO and severity for each winter
+            table_data = []
+            for _, row in recent_winters.iterrows():
+                enso_short = 'N' if row['enso_phase'] == 'Neutral' else (
+                    'EN' if row['enso_phase'] == 'El Niño' else (
+                        'LN' if row['enso_phase'] == 'La Niña' else '?'
+                    )
+                )
+                table_data.append([
+                    row['winter_label'],
+                    enso_short,
+                    row['severity_category'][:4]  # First 4 chars of severity
+                ])
+            
+            # Create text display
+            enso_text = "ENSO Phase by Winter\n\n"
+            enso_text += "Year      ENSO  Severity\n"
+            enso_text += "─" * 28 + "\n"
+            for row_data in table_data:
+                enso_text += f"{row_data[0]:<10}{row_data[1]:<6}{row_data[2]}\n"
+            
+            enso_text += "\n" + "─" * 28 + "\n"
+            enso_text += "EN = El Niño\n"
+            enso_text += "LN = La Niña\n"
+            enso_text += "N  = Neutral"
+            
+            ax4.text(0.1, 0.95, enso_text, transform=ax4.transAxes,
+                    fontsize=9, verticalalignment='top', family='monospace',
+                    bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+            ax4.axis('off')
+            ax4.set_title('ENSO Phases & Severity', fontweight='bold')
+        else:
+            # Fallback to original pie chart if ENSO data not available
+            category_counts = recent_winters['severity_category'].value_counts()
+            colors_pie = [severity_colors.get(cat, '#64B5F6') for cat in category_counts.index]
+            
+            wedges, texts, autotexts = ax4.pie(category_counts.values, 
+                                               labels=category_counts.index,
+                                               colors=colors_pie,
+                                               autopct='%1.0f%%',
+                                               startangle=90,
+                                               textprops={'fontsize': 11, 'fontweight': 'bold'})
+            
+            ax4.set_title(f'Winter Severity Distribution\n(Last {n_years} Years)', fontweight='bold')
         
         plt.tight_layout()
         
@@ -298,18 +362,19 @@ class WeatherVisualizer:
         
         return filepath
     
-    def visualize_both(self, prediction, winter_df, n_years=10):
+    def visualize_both(self, prediction, winter_df, n_years=10, enso_info=None):
         """Create both visualizations and return their paths.
         
         Args:
             prediction: Dictionary with prediction results
             winter_df: DataFrame with historical winter data
             n_years: Number of recent years to visualize
+            enso_info: Optional dict with ENSO classification for the predicted winter
             
         Returns:
             tuple: (prediction_path, historical_path)
         """
-        prediction_path = self.visualize_prediction(prediction, winter_df)
+        prediction_path = self.visualize_prediction(prediction, winter_df, enso_info)
         historical_path = self.visualize_historical_winters(winter_df, n_years)
         
         return prediction_path, historical_path
