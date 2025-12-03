@@ -4,6 +4,7 @@ Creates charts and graphs for weather analysis.
 """
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -13,6 +14,13 @@ import os
 
 class WeatherVisualizer:
     """Creates visualizations for weather data and predictions."""
+    
+    # ENSO phase abbreviations for compact display
+    ENSO_PHASE_ABBREVIATIONS = {
+        'Neutral': 'N',
+        'El Niño': 'EN',
+        'La Niña': 'LN'
+    }
     
     def __init__(self, output_dir="visualizations"):
         """Initialize the visualizer.
@@ -198,12 +206,17 @@ class WeatherVisualizer:
         # Get the last n years
         recent_winters = winter_df.tail(n_years)
         
-        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        # Create figure with custom GridSpec layout
+        # Top row: 2 equal columns
+        # Bottom row: 1 column left, 2 smaller columns right for pie chart and ENSO table
+        fig = plt.figure(figsize=(14, 10))
+        gs = gridspec.GridSpec(2, 3, figure=fig, width_ratios=[1, 0.5, 0.5], height_ratios=[1, 1])
+        
         fig.suptitle(f'Last {n_years} Winters in Boise (Historical Data)\nWinter = December-January-February', 
                      fontsize=16, fontweight='bold')
         
         # 1. Temperature Trends (top-left)
-        ax1 = axes[0, 0]
+        ax1 = fig.add_subplot(gs[0, 0])
         
         ax1.plot(recent_winters['winter_label'], recent_winters['avg_temp'], 
                 marker='o', linewidth=2, markersize=8, color='#2196F3', label='Average Temp')
@@ -221,8 +234,8 @@ class WeatherVisualizer:
         ax1.grid(True, alpha=0.3)
         plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
         
-        # 2. Snowfall Trends (top-right)
-        ax2 = axes[0, 1]
+        # 2. Snowfall Trends (top-right, spans 2 columns)
+        ax2 = fig.add_subplot(gs[0, 1:])
         
         bars = ax2.bar(recent_winters['winter_label'], recent_winters['total_snowfall'], 
                       color='#64B5F6', edgecolor='black', alpha=0.7)
@@ -251,7 +264,7 @@ class WeatherVisualizer:
                     f'{height:.1f}"', ha='center', va='bottom', fontsize=8)
         
         # 3. Severity Categories (bottom-left)
-        ax3 = axes[1, 0]
+        ax3 = fig.add_subplot(gs[1, 0])
         
         # Create scatter plot with severity score
         severities = recent_winters['severity_category'].map({
@@ -285,8 +298,8 @@ class WeatherVisualizer:
         ax3.text(len(recent_winters) - 0.5, 50, 'Extreme', 
                 ha='right', va='bottom', fontsize=8, alpha=0.7)
         
-        # 4. Severity Distribution Pie Chart (bottom-right)
-        ax4 = axes[1, 1]
+        # 4. Severity Distribution Pie Chart (bottom-center-right)
+        ax4 = fig.add_subplot(gs[1, 1])
         
         # Create pie chart showing severity distribution
         category_counts = recent_winters['severity_category'].value_counts()
@@ -297,9 +310,45 @@ class WeatherVisualizer:
                                            colors=colors_pie,
                                            autopct='%1.0f%%',
                                            startangle=90,
-                                           textprops={'fontsize': 11, 'fontweight': 'bold'})
+                                           textprops={'fontsize': 9, 'fontweight': 'bold'})
         
-        ax4.set_title(f'Winter Severity Distribution\n(Last {n_years} Years)', fontweight='bold')
+        ax4.set_title(f'Severity Distribution\n(Last {n_years} Years)', fontweight='bold', fontsize=10)
+        
+        # 5. ENSO Phase Table (bottom-far-right)
+        ax5 = fig.add_subplot(gs[1, 2])
+        
+        # Check if ENSO data is available
+        if 'enso_phase' in recent_winters.columns:
+            # Create a table showing ENSO and severity for each winter
+            table_data = []
+            for _, row in recent_winters.iterrows():
+                enso_short = self.ENSO_PHASE_ABBREVIATIONS.get(row['enso_phase'], '?')
+                table_data.append([
+                    row['winter_label'],
+                    enso_short,
+                    row['severity_category'][:4]  # First 4 chars of severity
+                ])
+            
+            # Create text display
+            enso_text = "ENSO Phase\n\n"
+            enso_text += "Year     ENSO\n"
+            enso_text += "─" * 15 + "\n"
+            for row_data in table_data:
+                enso_text += f"{row_data[0]:<9}{row_data[1]}\n"
+            
+            enso_text += "\n" + "─" * 15 + "\n"
+            enso_text += "EN = El Niño\n"
+            enso_text += "LN = La Niña\n"
+            enso_text += "N  = Neutral"
+            
+            ax5.text(0.1, 0.95, enso_text, transform=ax5.transAxes,
+                    fontsize=8, verticalalignment='top', family='monospace',
+                    bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+            ax5.axis('off')
+            ax5.set_title('ENSO Phases', fontweight='bold', fontsize=10)
+        else:
+            # If no ENSO data, just turn off the axis
+            ax5.axis('off')
         
         plt.tight_layout()
         
