@@ -117,6 +117,19 @@ class TestWinterPredictor(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.predictor.predict(summer_features)
     
+    def test_enso_features_included(self):
+        """Test that ENSO features are included in the model."""
+        self.predictor.train(self.sample_correlation_df)
+        
+        # Check that ENSO features are in the feature columns
+        self.assertIn("enso_oni", self.predictor.feature_columns)
+        self.assertIn("enso_el_nino", self.predictor.feature_columns)
+        self.assertIn("enso_la_nina", self.predictor.feature_columns)
+        self.assertIn("enso_neutral", self.predictor.feature_columns)
+        
+        # Check that all 9 features are included (5 weather + 4 ENSO)
+        self.assertEqual(len(self.predictor.feature_columns), 9)
+    
     def test_feature_importance(self):
         """Test that feature importance can be retrieved."""
         self.predictor.train(self.sample_correlation_df)
