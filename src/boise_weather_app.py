@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from weather_fetcher import WeatherDataFetcher
 from weather_analyzer import WeatherAnalyzer
 from winter_predictor import WinterPredictor
+from weather_visualizer import WeatherVisualizer
 
 
 def print_section(title):
@@ -173,6 +174,31 @@ def main():
         print(f"    • Average Temperature: {format_temp(stats['avg_temp'])}")
         print(f"    • Average Annual Precipitation: {format_precip(stats['total_precip'])}")
         print(f"    • Trend: {stats['temp_trend'].capitalize()}")
+    
+    # Generate visualizations
+    print_section("Generating Visualizations")
+    
+    print("\n⟳ Creating prediction visualization...")
+    visualizer = WeatherVisualizer()
+    
+    try:
+        prediction_path, historical_path = visualizer.visualize_both(
+            prediction, winter_df, n_years=10
+        )
+        
+        print(f"✓ Prediction visualization saved: {prediction_path}")
+        print(f"✓ Historical winters visualization saved: {historical_path}")
+        
+        print("\n  Visualizations include:")
+        print(f"    • Winter {prediction['winter_label']} prediction details")
+        print(f"    • Category probabilities and severity score")
+        print(f"    • Temperature and snowfall predictions")
+        print(f"    • Last 10 years of historical winter data")
+        print(f"    • Temperature trends, snowfall patterns, and severity distribution")
+        
+    except Exception as e:
+        print(f"\n✗ Error generating visualizations: {e}")
+        print("  Continuing without visualizations...")
     
     # Summary
     print_section("Summary")
