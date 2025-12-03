@@ -384,8 +384,8 @@ class WeatherVisualizer:
         Returns:
             str: Path to saved figure
         """
-        fig = plt.figure(figsize=(16, 10))
-        gs = gridspec.GridSpec(3, 3, figure=fig, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.3)
+        fig = plt.figure(figsize=(18, 12))
+        gs = gridspec.GridSpec(3, 3, figure=fig, height_ratios=[1, 1, 1], hspace=0.4, wspace=0.35)
         
         fig.suptitle('Winter Prediction Feature Analysis\nComprehensive View of All Input Features', 
                      fontsize=16, fontweight='bold')
@@ -409,11 +409,11 @@ class WeatherVisualizer:
             # Plot heatmap
             sns.heatmap(corr_matrix, mask=mask, annot=False, cmap='coolwarm', 
                        center=0, vmin=-1, vmax=1, ax=ax1, cbar_kws={'label': 'Correlation'})
-            ax1.set_title('Feature Correlation Matrix', fontweight='bold', fontsize=12)
+            ax1.set_title('Feature Correlation Matrix', fontweight='bold', fontsize=11, pad=10)
             
             # Rotate labels for better readability
-            ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right', fontsize=8)
-            ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0, fontsize=8)
+            ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right', fontsize=7)
+            ax1.set_yticklabels(ax1.get_yticklabels(), rotation=0, fontsize=7)
         
         # 2. Feature Categories Breakdown (top right)
         ax2 = fig.add_subplot(gs[0, 2])
@@ -433,8 +433,8 @@ class WeatherVisualizer:
         
         wedges, texts, autotexts = ax2.pie(counts, labels=categories, colors=colors_cat,
                                             autopct='%1.0f%%', startangle=90,
-                                            textprops={'fontsize': 8, 'fontweight': 'bold'})
-        ax2.set_title('Feature Categories', fontweight='bold', fontsize=12)
+                                            textprops={'fontsize': 7, 'fontweight': 'bold'})
+        ax2.set_title('Feature Categories', fontweight='bold', fontsize=11, pad=10)
         
         # 3. Lag Features Over Time (middle row, left)
         ax3 = fig.add_subplot(gs[1, 0])
@@ -453,12 +453,12 @@ class WeatherVisualizer:
                 ax3.plot(recent_data['winter_year'], recent_data['rolling_3yr_severity'],
                         marker='^', label='3-Year Avg', linewidth=2, markersize=5, linestyle=':', alpha=0.7)
             
-            ax3.set_xlabel('Winter Year', fontweight='bold')
-            ax3.set_ylabel('Severity Score', fontweight='bold')
-            ax3.set_title('Lag Features: Winter Severity Trends', fontweight='bold', fontsize=11)
-            ax3.legend(fontsize=8)
+            ax3.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
+            ax3.set_ylabel('Severity Score', fontweight='bold', fontsize=9)
+            ax3.set_title('Lag Features: Winter Severity Trends', fontweight='bold', fontsize=11, pad=10)
+            ax3.legend(fontsize=7, loc='upper left')
             ax3.grid(True, alpha=0.3)
-            plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            plt.setp(ax3.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
         else:
             ax3.text(0.5, 0.5, 'Lag feature data not available', 
                     ha='center', va='center', transform=ax3.transAxes)
@@ -483,12 +483,12 @@ class WeatherVisualizer:
                         marker='^', label='3-Year Avg', linewidth=2, markersize=5,
                         linestyle=':', alpha=0.7, color='#90CAF9')
             
-            ax4.set_xlabel('Winter Year', fontweight='bold')
-            ax4.set_ylabel('Snowfall (inches)', fontweight='bold')
-            ax4.set_title('Lag Features: Snowfall Trends', fontweight='bold', fontsize=11)
-            ax4.legend(fontsize=8)
+            ax4.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
+            ax4.set_ylabel('Snowfall (inches)', fontweight='bold', fontsize=9)
+            ax4.set_title('Lag Features: Snowfall Trends', fontweight='bold', fontsize=11, pad=10)
+            ax4.legend(fontsize=7, loc='upper left')
             ax4.grid(True, alpha=0.3)
-            plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            plt.setp(ax4.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
         else:
             ax4.text(0.5, 0.5, 'Snowfall lag data not available',
                     ha='center', va='center', transform=ax4.transAxes)
@@ -513,12 +513,12 @@ class WeatherVisualizer:
                         marker='^', label='3-Year Avg', linewidth=2, markersize=5,
                         linestyle=':', alpha=0.7, color='#FFAB91')
             
-            ax5.set_xlabel('Winter Year', fontweight='bold')
-            ax5.set_ylabel('Temperature (°F)', fontweight='bold')
-            ax5.set_title('Lag Features: Temperature Trends', fontweight='bold', fontsize=11)
-            ax5.legend(fontsize=8)
+            ax5.set_xlabel('Winter Year', fontweight='bold', fontsize=9)
+            ax5.set_ylabel('Temperature (°F)', fontweight='bold', fontsize=9)
+            ax5.set_title('Lag Features: Temperature Trends', fontweight='bold', fontsize=11, pad=10)
+            ax5.legend(fontsize=7, loc='upper left')
             ax5.grid(True, alpha=0.3)
-            plt.setp(ax5.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            plt.setp(ax5.xaxis.get_majorticklabels(), rotation=45, ha='right', fontsize=7)
         else:
             ax5.text(0.5, 0.5, 'Temperature lag data not available',
                     ha='center', va='center', transform=ax5.transAxes)
@@ -562,11 +562,11 @@ class WeatherVisualizer:
             for feat in rolling_features:
                 feature_list_text += f"  • {feat}\n"
         
-        ax6.text(0.05, 0.95, feature_list_text, transform=ax6.transAxes,
-                fontsize=9, verticalalignment='top', family='monospace',
+        ax6.text(0.05, 0.90, feature_list_text, transform=ax6.transAxes,
+                fontsize=8, verticalalignment='top', family='monospace',
                 bbox=dict(boxstyle='round', facecolor='lightgray', alpha=0.3))
         ax6.axis('off')
-        ax6.set_title('Feature Inventory', fontweight='bold', fontsize=12, loc='left')
+        ax6.set_title('Feature Inventory', fontweight='bold', fontsize=11, loc='left', pad=10)
         
         # 7. Key Statistics (bottom right)
         ax7 = fig.add_subplot(gs[2, 2])
@@ -598,13 +598,13 @@ class WeatherVisualizer:
             stats_text += f"  Category: {prediction['predicted_category']}\n"
             stats_text += f"  Confidence: {prediction['confidence']*100:.1f}%\n"
         
-        ax7.text(0.1, 0.95, stats_text, transform=ax7.transAxes,
-                fontsize=9, verticalalignment='top', family='monospace',
+        ax7.text(0.1, 0.90, stats_text, transform=ax7.transAxes,
+                fontsize=8, verticalalignment='top', family='monospace',
                 bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
         ax7.axis('off')
-        ax7.set_title('Summary Statistics', fontweight='bold', fontsize=12, loc='left')
+        ax7.set_title('Summary Statistics', fontweight='bold', fontsize=11, loc='left', pad=10)
         
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 1, 0.97])
         
         # Save the figure
         filename = "feature_analysis.png"
