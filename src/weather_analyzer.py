@@ -11,6 +11,21 @@ from datetime import datetime
 class WeatherAnalyzer:
     """Analyzes weather data to identify seasonal patterns and trends."""
     
+    # Winter severity calculation weights
+    SEVERITY_COLD_TEMP_WEIGHT = 0.5
+    SEVERITY_BELOW_20_WEIGHT = 0.3
+    SEVERITY_BELOW_32_WEIGHT = 0.1
+    SEVERITY_SNOWFALL_WEIGHT = 0.2
+    SEVERITY_SNOW_DAYS_WEIGHT = 0.5
+    SEVERITY_WIND_WEIGHT = 0.3
+    SEVERITY_WIND_THRESHOLD = 15
+    SEVERITY_COLD_TEMP_THRESHOLD = 30
+    
+    # Winter severity category thresholds
+    SEVERITY_MILD_THRESHOLD = 15
+    SEVERITY_MODERATE_THRESHOLD = 30
+    SEVERITY_SEVERE_THRESHOLD = 50
+    
     def __init__(self, df):
         """Initialize the analyzer with weather data.
         
@@ -172,20 +187,20 @@ class WeatherAnalyzer:
         score = 0.0
         
         # Cold temperature contributes to severity
-        if winter_features["avg_temp"] < 30:
-            score += (30 - winter_features["avg_temp"]) * 0.5
+        if winter_features["avg_temp"] < self.SEVERITY_COLD_TEMP_THRESHOLD:
+            score += (self.SEVERITY_COLD_TEMP_THRESHOLD - winter_features["avg_temp"]) * self.SEVERITY_COLD_TEMP_WEIGHT
         
         # More cold days = more severe
-        score += winter_features["days_below_20"] * 0.3
-        score += winter_features["days_below_32"] * 0.1
+        score += winter_features["days_below_20"] * self.SEVERITY_BELOW_20_WEIGHT
+        score += winter_features["days_below_32"] * self.SEVERITY_BELOW_32_WEIGHT
         
         # More snow = more severe
-        score += winter_features["total_snowfall"] * 0.2
-        score += winter_features["snow_days"] * 0.5
+        score += winter_features["total_snowfall"] * self.SEVERITY_SNOWFALL_WEIGHT
+        score += winter_features["snow_days"] * self.SEVERITY_SNOW_DAYS_WEIGHT
         
         # High wind = more severe
-        if winter_features["avg_wind_speed"] > 15:
-            score += (winter_features["avg_wind_speed"] - 15) * 0.3
+        if winter_features["avg_wind_speed"] > self.SEVERITY_WIND_THRESHOLD:
+            score += (winter_features["avg_wind_speed"] - self.SEVERITY_WIND_THRESHOLD) * self.SEVERITY_WIND_WEIGHT
         
         return score
     
@@ -198,11 +213,11 @@ class WeatherAnalyzer:
         Returns:
             str: Category (Mild, Moderate, Severe, Extreme)
         """
-        if score < 15:
+        if score < self.SEVERITY_MILD_THRESHOLD:
             return "Mild"
-        elif score < 30:
+        elif score < self.SEVERITY_MODERATE_THRESHOLD:
             return "Moderate"
-        elif score < 50:
+        elif score < self.SEVERITY_SEVERE_THRESHOLD:
             return "Severe"
         else:
             return "Extreme"

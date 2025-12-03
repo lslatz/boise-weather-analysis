@@ -20,6 +20,9 @@ class WeatherDataFetcher:
     # Open-Meteo API base URL
     API_URL = "https://archive-api.open-meteo.com/v1/archive"
     
+    # API request timeout in seconds
+    REQUEST_TIMEOUT = 60
+    
     def __init__(self, data_dir="weather_data"):
         """Initialize the weather data fetcher.
         
@@ -73,7 +76,7 @@ class WeatherDataFetcher:
         params["daily"] = ",".join(params["daily"])
         
         try:
-            response = requests.get(self.API_URL, params=params, timeout=60)
+            response = requests.get(self.API_URL, params=params, timeout=self.REQUEST_TIMEOUT)
             response.raise_for_status()
             data = response.json()
             

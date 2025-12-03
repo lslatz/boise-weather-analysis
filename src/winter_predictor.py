@@ -21,6 +21,7 @@ class WinterPredictor:
         self.category_model = None
         self.scaler = StandardScaler()
         self.feature_columns = []
+        self.feature_means = {}  # Store historical means for imputation
         self.is_trained = False
     
     def prepare_training_data(self, correlation_df):
@@ -47,6 +48,9 @@ class WinterPredictor:
         
         if len(df_clean) < 10:
             raise ValueError("Insufficient data for training (need at least 10 complete records)")
+        
+        # Calculate feature means for imputation
+        self.feature_means = df_clean[feature_cols].mean().to_dict()
         
         X = df_clean[feature_cols].values
         y_severity = df_clean["winter_severity"].values
@@ -165,8 +169,8 @@ class WinterPredictor:
             if col in feature_vector:
                 X.append(feature_vector[col])
             else:
-                # Use historical mean if feature is missing
-                X.append(0)  # Will be handled by the model
+                # Use historical mean for missing features
+                X.append(self.feature_means.get(col, 0))
         
         X = np.array([X])
         X_scaled = self.scaler.transform(X)
