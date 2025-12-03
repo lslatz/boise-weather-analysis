@@ -30,6 +30,10 @@ class TestWinterPredictor(unittest.TestCase):
             "prev_summer_hot_days": np.random.randint(0, 30, n_samples),
             "prev_fall_temp": np.random.uniform(40, 60, n_samples),
             "prev_fall_precip": np.random.uniform(2, 6, n_samples),
+            "enso_oni": np.random.uniform(-2, 2, n_samples),
+            "enso_el_nino": np.random.choice([0.0, 1.0], n_samples),
+            "enso_la_nina": np.random.choice([0.0, 1.0], n_samples),
+            "enso_neutral": np.random.choice([0.0, 1.0], n_samples),
             "winter_severity": np.random.uniform(10, 50, n_samples),
             "winter_snowfall": np.random.uniform(5, 30, n_samples),
             "winter_temp_avg": np.random.uniform(25, 40, n_samples),
@@ -84,8 +88,14 @@ class TestWinterPredictor(unittest.TestCase):
             "temp_mean": 50.0,
             "precip_total": 4.0
         }
+        enso_features = {
+            "oni": 1.5,
+            "el_nino": 1.0,
+            "la_nina": 0.0,
+            "neutral": 0.0
+        }
         
-        prediction = self.predictor.predict(summer_features, fall_features)
+        prediction = self.predictor.predict(summer_features, fall_features, enso_features)
         
         # Check that prediction has expected keys
         expected_keys = ["severity_score", "predicted_category", "category_probabilities",

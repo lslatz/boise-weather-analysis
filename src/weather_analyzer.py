@@ -273,6 +273,14 @@ class WeatherAnalyzer:
                     merged_row["prev_fall_temp"] = prev_seasonal["fall_temp_mean"].values[0]
                     merged_row["prev_fall_precip"] = prev_seasonal["fall_precip_total"].values[0]
                 
+                # Add ENSO features for this winter
+                enso_info = self.enso_classifier.classify_winter(winter_year)
+                merged_row["enso_oni"] = enso_info["oni_value"] if enso_info["oni_value"] is not None else 0.0
+                # One-hot encode ENSO phase
+                merged_row["enso_el_nino"] = 1.0 if enso_info["phase"] == "El Niño" else 0.0
+                merged_row["enso_la_nina"] = 1.0 if enso_info["phase"] == "La Niña" else 0.0
+                merged_row["enso_neutral"] = 1.0 if enso_info["phase"] == "Neutral" else 0.0
+                
                 merged_data.append(merged_row)
         
         correlation_df = pd.DataFrame(merged_data)
@@ -291,6 +299,14 @@ class WeatherAnalyzer:
             correlations["fall_temp_to_winter_temp"] = correlation_df[
                 ["prev_fall_temp", "winter_temp_avg"]
             ].corr().iloc[0, 1] if "prev_fall_temp" in correlation_df.columns else None
+            
+            correlations["enso_oni_to_winter_severity"] = correlation_df[
+                ["enso_oni", "winter_severity"]
+            ].corr().iloc[0, 1] if "enso_oni" in correlation_df.columns else None
+            
+            correlations["enso_oni_to_winter_temp"] = correlation_df[
+                ["enso_oni", "winter_temp_avg"]
+            ].corr().iloc[0, 1] if "enso_oni" in correlation_df.columns else None
         
         return {
             "correlations": correlations,
