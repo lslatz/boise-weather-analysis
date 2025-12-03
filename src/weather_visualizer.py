@@ -14,6 +14,9 @@ import os
 class WeatherVisualizer:
     """Creates visualizations for weather data and predictions."""
     
+    # ENSO marker positioning offset (as fraction of y-axis range from bottom)
+    ENSO_MARKER_POSITION_OFFSET = 0.02
+    
     def __init__(self, output_dir="visualizations"):
         """Initialize the visualizer.
         
@@ -45,9 +48,9 @@ class WeatherVisualizer:
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
         
         # Add ENSO to title if available
-        title = f"Winter {prediction['winter_label']} Prediction"
+        title = f"Winter {prediction['winter_label']} Prediction (Dec-Jan-Feb)"
         if enso_info and enso_info.get('phase') != 'Unknown':
-            title += f" - {enso_info['description']}"
+            title += f"\n{enso_info['description']}"
         fig.suptitle(title, fontsize=16, fontweight='bold')
         
         # 1. Category Probabilities (top-left)
@@ -199,7 +202,7 @@ class WeatherVisualizer:
         recent_winters = winter_df.tail(n_years)
         
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-        fig.suptitle(f'Last {n_years} Winters in Boise (Historical Data)', 
+        fig.suptitle(f'Last {n_years} Winters in Boise (Historical Data)\nWinter = December-January-February', 
                      fontsize=16, fontweight='bold')
         
         # 1. Temperature Trends (top-left)
@@ -227,7 +230,7 @@ class WeatherVisualizer:
                         marker_color = '#95A5A6'  # Gray for Neutral
                     
                     # Add ENSO marker at the bottom of the chart
-                    y_pos = ax1.get_ylim()[0] + (ax1.get_ylim()[1] - ax1.get_ylim()[0]) * 0.02
+                    y_pos = ax1.get_ylim()[0] + (ax1.get_ylim()[1] - ax1.get_ylim()[0]) * self.ENSO_MARKER_POSITION_OFFSET
                     ax1.plot(i, y_pos, marker='s', markersize=10, 
                             color=marker_color, alpha=0.7, zorder=10)
         
@@ -307,14 +310,13 @@ class WeatherVisualizer:
         
         # Check if ENSO data is available
         if 'enso_phase' in recent_winters.columns:
+            # ENSO phase abbreviations
+            enso_mapping = {'Neutral': 'N', 'El Niño': 'EN', 'La Niña': 'LN'}
+            
             # Create a table showing ENSO and severity for each winter
             table_data = []
             for _, row in recent_winters.iterrows():
-                enso_short = 'N' if row['enso_phase'] == 'Neutral' else (
-                    'EN' if row['enso_phase'] == 'El Niño' else (
-                        'LN' if row['enso_phase'] == 'La Niña' else '?'
-                    )
-                )
+                enso_short = enso_mapping.get(row['enso_phase'], '?')
                 table_data.append([
                     row['winter_label'],
                     enso_short,
